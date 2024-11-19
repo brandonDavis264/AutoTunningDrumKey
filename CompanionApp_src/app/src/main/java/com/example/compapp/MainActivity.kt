@@ -30,56 +30,59 @@ import com.example.compapp.ui.theme.CompAppTheme
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import android.Manifest
-import android.app.Activity
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
 import android.content.Context
-
-
-object BluetoothHelper {
-    private const val REQUEST_ENABLE_BT = 1
-    private const val REQUEST_BLUETOOTH_PERMISSION = 2
-
-    // Function to check and request Bluetooth permission if necessary
-    fun checkAndRequestBluetoothPermission(activity: Activity): Boolean {
-        return if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
-                REQUEST_BLUETOOTH_PERMISSION
-            )
-            false
-        } else {
-            true
-        }
-    }
-
-    // Function to enable Bluetooth if permissions are granted
-    fun enableBluetooth(activity: Activity) {
-        val bluetoothManager = activity.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
-
-        if (bluetoothAdapter?.isEnabled == false) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
-        }
-    }
-}
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
-    private val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
-    private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.getAdapter()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (BluetoothHelper.checkAndRequestBluetoothPermission(this)) {
-            BluetoothHelper.enableBluetooth(this)
+        val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter != null) {
+            if(bluetoothAdapter.isEnabled){
+                Toast.makeText(this, "Bluetooth enabled", Toast.LENGTH_SHORT).show();
+            } else{
+                Toast.makeText(this, "Bluetooth disabled", Toast.LENGTH_SHORT).show();
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        android.Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(android.Manifest.permission.BLUETOOTH_ADMIN),
+                        1001
+                    )
+                    bluetoothAdapter.enable()
+
+                    val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                    startActivityForResult(enableBtIntent, 1)
+                    bluetoothAdapter.startDiscovery()
+                    ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_ADMIN)
+                    ActivityResultContracts.RequestPermission()
+                }
+            }
         }
+
+        // Register for broadcasts when a device is discovered.
+        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+        registerReceiver(receiver, filter)
+
+        // connect to a bluetooth device acting as a client
+        val address = "00:1A:7D:DA:71:13" // just a random value
+        val btDevice = bluetoothAdapter?.getRemoteDevice(address)
+
+
+
 
         enableEdgeToEdge()
         setContent {
@@ -141,3 +144,32 @@ fun GreetingWithButtonPreview() {
         GreetingWithButton()
     }
 }
+
+// Create a BroadcastReceiver for ACTION_FOUND.
+private val receiver = object : BroadcastReceiver() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val action: String? = intent.action
+        when(action) {
+            BluetoothDevice.ACTION_FOUND -> {
+                // Discovery has found a device. Get the BluetoothDevice
+                // object and its info from the Intent.
+                val device: BluetoothDevice? =
+                    intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                val deviceName = device?.name ?:"Unknown Device" // handle null case
+                val deviceHardwareAddress = device?.address ?: "Unknown address"// MAC address
+
+                // Log or handle the found device info
+                println("Device found: $deviceName ($deviceHardwareAddress)")
+            }
+        }
+    }
+}
+
+
+//fun onDestroy() {
+//    super.onDestroy()
+//
+//    // Don't forget to unregister the ACTION_FOUND receiver.
+//    unregisterReceiver(receiver)
+//}
