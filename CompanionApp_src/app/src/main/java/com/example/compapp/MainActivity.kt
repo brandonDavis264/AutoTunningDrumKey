@@ -30,57 +30,33 @@ import com.example.compapp.ui.theme.CompAppTheme
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import android.Manifest
-import android.app.Activity
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context
-
-
-object BluetoothHelper {
-    private const val REQUEST_ENABLE_BT = 1
-    private const val REQUEST_BLUETOOTH_PERMISSION = 2
-
-    // Function to check and request Bluetooth permission if necessary
-    fun checkAndRequestBluetoothPermission(activity: Activity): Boolean {
-        return if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
-                REQUEST_BLUETOOTH_PERMISSION
-            )
-            false
-        } else {
-            true
-        }
-    }
-
-    // Function to enable Bluetooth if permissions are granted
-    fun enableBluetooth(activity: Activity) {
-        val bluetoothManager = activity.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
-
-        if (bluetoothAdapter?.isEnabled == false) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
-        }
-    }
-}
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
-    private val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
-    private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.getAdapter()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (BluetoothHelper.checkAndRequestBluetoothPermission(this)) {
-            BluetoothHelper.enableBluetooth(this)
+        val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter != null) {
+            if(bluetoothAdapter.isEnabled){
+                Toast.makeText(this, "Bluetooth enabled", Toast.LENGTH_SHORT).show();
+            } else{
+                Toast.makeText(this, "Bluetooth disabled", Toast.LENGTH_SHORT).show();
+                if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(android.Manifest.permission.BLUETOOTH_ADMIN),
+                        1001
+                    )
+                }
+            }
         }
-
         enableEdgeToEdge()
         setContent {
             CompAppTheme {
