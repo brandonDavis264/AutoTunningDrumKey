@@ -1,0 +1,32 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/gradient_background"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/WelcomeView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/lilita_one_regular"
+        android:text="@string/welcome_to_autotuner_2"/>
+
+    <Button
+        android:id="@+id/getStartedBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:padding="16dp"
+        android:layout_margin="25dp"
+        android:fontFamily="@font/lilita_one_regular"
+        android:backgroundTint="#0000AF"
+        android:textColor="@color/white"
+        android:text="@string/get_started_2"
+        android:textAllCaps="false"/>
+</LinearLayout>

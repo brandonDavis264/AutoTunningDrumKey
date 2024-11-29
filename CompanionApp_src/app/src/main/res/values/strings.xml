@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CompApp</string>
+    <string name="welcome_to_autotuner">Welcome to AutoTuner</string>
+    <string name="get_started">Get Started</string>
+    <string name="get_started_2">Get Started</string>
+    <string name="welcome_to_autotuner_2">Welcome to AutoTuner</string>
+    <string name="title_activity_main2">MainActivity2</string>
 </resources>
