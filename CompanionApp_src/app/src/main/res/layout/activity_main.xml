@@ -21,12 +21,12 @@
         android:id="@+id/getStartedBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:padding="16dp"
         android:layout_margin="25dp"
+        android:backgroundTint="#0000FF"
         android:fontFamily="@font/lilita_one_regular"
-        android:backgroundTint="#0000AF"
-        android:textColor="@color/white"
+        android:padding="16dp"
         android:text="@string/get_started_2"
-        android:textAllCaps="false"/>
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="24sp" />
 </LinearLayout>
