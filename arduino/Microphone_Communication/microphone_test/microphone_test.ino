@@ -8,7 +8,7 @@
 #define I2S_PORT I2S_NUM_0
 
 BluetoothSerial SerialBT;
-int bufferLen = 4096; // Reduced buffer size
+int bufferLen = 4096; // Buffer size for FFT
 int BLUE_LED = 2;
 
 // Dynamic Buffers
@@ -62,24 +62,33 @@ bool allocateBuffers(int length) {
 }
 
 void recordAndCalculateAverage() {
-  Serial.println("Recording for 1 second...");
   unsigned long startTime = millis();
   double totalFrequency = 0;
   int numReadings = 0;
 
-  while (millis() - startTime < 1000) {
+  while (millis() - startTime < 1000) { // 1 second
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
 
     if (result == ESP_OK && bytesIn > 0) {
       int samples_read = bytesIn / sizeof(int16_t);
+
+      // Remove DC offset
+      double mean = 0;
       for (int i = 0; i < samples_read; i++) {
-        vReal[i] = sBuffer[i];
+        mean += sBuffer[i];
+      }
+      mean /= samples_read;
+
+      for (int i = 0; i < samples_read; i++) {
+        vReal[i] = sBuffer[i] - mean;
         vImag[i] = 0;
       }
+
       FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
       FFT.compute(FFT_FORWARD);
       FFT.complexToMagnitude();
+
       totalFrequency += FFT.majorPeak();
       numReadings++;
     }
@@ -88,7 +97,7 @@ void recordAndCalculateAverage() {
   if (numReadings > 0) {
     double averageFrequency = totalFrequency / numReadings;
     Serial.println("Average Frequency: " + String(averageFrequency) + " Hz");
-    SerialBT.println("Average Frequency: " + String(averageFrequency) + " Hz");
+    SerialBT.println(String(averageFrequency)); // Send frequency via Bluetooth
   }
 }
 
@@ -103,16 +112,8 @@ void setup() {
 
 void loop() {
   if (SerialBT.hasClient()) {
-    digitalWrite(BLUE_LED, HIGH);
-    delay(500);
-    digitalWrite(BLUE_LED, LOW);
-    delay(500);
-
-    if (SerialBT.available()) {
-      char command = SerialBT.read();
-      if (command == 's') {
-        recordAndCalculateAverage();
-      }
-    }
+    digitalWrite(BLUE_LED, 2);
+    //recordAndCalculateAverage(); // Automatically record and send data every second
+    //delay(1000); // Ensure 1-second intervals
   }
 }
