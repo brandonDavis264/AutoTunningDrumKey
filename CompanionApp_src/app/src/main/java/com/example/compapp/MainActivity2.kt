@@ -1,31 +1,22 @@
 package com.example.compapp
 
-import android.os.Bundle
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import androidx.appcompat.app.AppCompatActivity
-
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.ImageView
-import android.widget.ScrollView
-import android.widget.TextView
+import android.widget.Spinner
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import java.io.IOException
 import java.util.UUID
@@ -34,20 +25,17 @@ class MainActivity2 : AppCompatActivity() {
 
     private lateinit var requestBluetoothPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var requestBluetoothSocketPermissionLauncher: ActivityResultLauncher<String>
-
     private lateinit var bluetoothManager: BluetoothManager
-    private var bluetoothAdapter: BluetoothAdapter? = null
-    private var bluetoothSocket: BluetoothSocket? = null
 
     private val bluetoothStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
-                val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+            if (intent.action == android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED) {
+                val state = intent.getIntExtra(android.bluetooth.BluetoothAdapter.EXTRA_STATE, android.bluetooth.BluetoothAdapter.ERROR)
                 when (state) {
-                    BluetoothAdapter.STATE_OFF -> {
+                    android.bluetooth.BluetoothAdapter.STATE_OFF -> {
                         Toast.makeText(context, "Bluetooth turned off", Toast.LENGTH_LONG).show()
                     }
-                    BluetoothAdapter.STATE_ON -> {
+                    android.bluetooth.BluetoothAdapter.STATE_ON -> {
                         Toast.makeText(context, "Bluetooth turned on", Toast.LENGTH_LONG).show()
                     }
                 }
@@ -60,9 +48,11 @@ class MainActivity2 : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
 
+        // Initialize Bluetooth Manager and Adapter
         bluetoothManager = getSystemService(BluetoothManager::class.java)
-        bluetoothAdapter = bluetoothManager.adapter
+        AppBluetoothManager.bluetoothAdapter = bluetoothManager.adapter
 
+        // Initialize permission request launchers
         requestBluetoothSocketPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted ->
@@ -73,7 +63,7 @@ class MainActivity2 : AppCompatActivity() {
             }
         }
 
-        registerReceiver(bluetoothStateReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        registerReceiver(bluetoothStateReceiver, IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
 
         // Drumhead Type Spinner
         val spinnerDrumheadType: Spinner = findViewById(R.id.spinner_drumhead_type)
@@ -116,9 +106,16 @@ class MainActivity2 : AppCompatActivity() {
         val adapter4 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, hoopTypeOptions)
         spinnerHoopType.adapter = adapter4
 
+        // Lug Count Spinner
+        val spinnerlugCount: Spinner = findViewById(R.id.spinner_lug_count)
+        val lugCountOptions = listOf("Select", "6", "8", "10", "12")
+        val adapter5 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, lugCountOptions)
+        spinnerlugCount.adapter = adapter5
+
+        // Record button functionality
         val record: Button = findViewById(R.id.record)
         record.setOnClickListener {
-            if (bluetoothAdapter?.isEnabled == true) {
+            if (AppBluetoothManager.bluetoothAdapter?.isEnabled == true) {
                 if (ActivityCompat.checkSelfPermission(
                         this,
                         Manifest.permission.BLUETOOTH_CONNECT
@@ -132,7 +129,6 @@ class MainActivity2 : AppCompatActivity() {
                 } else {
                     try {
                         connectToDevice("2C:BC:BB:4C:A9:8A")
-                        // Navigate to MainActivity3 only after a successful connection
                         val intent = Intent(this, MainActivity3::class.java)
                         startActivity(intent)
                     } catch (e: IOException) {
@@ -143,15 +139,13 @@ class MainActivity2 : AppCompatActivity() {
                 Toast.makeText(this, "Bluetooth is not enabled. Please enable it and try again.", Toast.LENGTH_SHORT).show()
             }
         }
-
-
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun connectToDevice(deviceAddress: String) {
         val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
         try {
-            val device = bluetoothAdapter?.getRemoteDevice(deviceAddress)
+            val device = AppBluetoothManager.bluetoothAdapter?.getRemoteDevice(deviceAddress)
             if (ActivityCompat.checkSelfPermission(
                     this,
                     Manifest.permission.BLUETOOTH_CONNECT
@@ -160,13 +154,14 @@ class MainActivity2 : AppCompatActivity() {
                 requestBluetoothSocketPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                 return
             }
-            bluetoothSocket = device?.createInsecureRfcommSocketToServiceRecord(uuid)
-            bluetoothSocket?.connect()
+            AppBluetoothManager.bluetoothSocket = device?.createInsecureRfcommSocketToServiceRecord(uuid)
+            AppBluetoothManager.bluetoothSocket?.connect()
 
             Toast.makeText(this, "Connected to ESP", Toast.LENGTH_SHORT).show()
 
         } catch (e: Exception) {
             e.printStackTrace()
+            Toast.makeText(this, "Connection failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
