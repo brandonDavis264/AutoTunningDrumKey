@@ -40,6 +40,8 @@ Cant properly detect peak
 Issues in noisy environment where the mic would be triggered for other noise that is not the drum.
 UI/UX Issues:
 Dropdown options are not dynamically linked to functionality.
+After drum specifications, the socket connection to the ESP fails at times yet the page still goes to the recording page which it shouldn't do since recording will be
+impossible without an active connection.
 
 Future Plans
 Possibly use a directional mic to avoid undesired noise or apply filters
