@@ -1,10 +1,12 @@
 #include <driver/i2s.h>
 #include <arduinoFFT.h>
+#include <ESP32Servo.h>
 #include "BluetoothSerial.h"
 
 #define I2S_WS 4
 #define I2S_SD 15
 #define I2S_SCK 23
+#define PWM_PIN 18
 #define I2S_PORT I2S_NUM_0
 
 BluetoothSerial SerialBT;
@@ -16,8 +18,19 @@ int16_t* sBuffer;
 double* vReal;
 double* vImag;
 
+// Servo object
+Servo servoFS5;
+
+// Servo position variable
+int servPos = 0;
+
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
+
+// Envelope Follower variables
+float envelope = 0.0f;
+const float alpha = 0.05f;  // Low-pass filter smoothing factor
+const float envelopeThreshold = 300.0f;  // Envelope threshold for calculation
 
 void i2s_install() {
   const i2s_config_t i2s_config = {
@@ -61,35 +74,74 @@ bool allocateBuffers(int length) {
   return true;
 }
 
+// Envelope Follower Function
+void processEnvelope(int16_t* sBuffer, size_t data_size) {
+  for (size_t i = 0; i < data_size; i++) {
+    // Rectify the signal (absolute value)
+    float rectified = abs(sBuffer[i]);
+    
+    // Apply low-pass filter to smooth the envelope
+    envelope = alpha * rectified + (1 - alpha) * envelope;
+  }
+
+  // Print envelope value for plotting (Serial Plotter compatible)
+  // Serial.print("envelope:");
+  // Serial.println(envelope);
+}
+
 void recordAndCalculateAverage() {
-  Serial.println("Recording for 1 second...");
   unsigned long startTime = millis();
   double totalFrequency = 0;
   int numReadings = 0;
 
-  while (millis() - startTime < 1000) {
+  while (millis() - startTime < 1) {
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
 
     if (result == ESP_OK && bytesIn > 0) {
       int samples_read = bytesIn / sizeof(int16_t);
-      for (int i = 0; i < samples_read; i++) {
-        vReal[i] = sBuffer[i];
-        vImag[i] = 0;
+
+      // Process the envelope on the audio data
+      processEnvelope(sBuffer, samples_read);
+
+      // Only proceed with FFT and frequency calculation if envelope exceeds threshold
+      if (envelope > envelopeThreshold) {
+        // FFT computation
+        for (int i = 0; i < samples_read; i++) {
+          vReal[i] = sBuffer[i];
+          vImag[i] = 0;
+        }
+
+        FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
+        FFT.compute(FFT_FORWARD);
+        FFT.complexToMagnitude();
+        totalFrequency += FFT.majorPeak();
+        numReadings++;
+        break;
       }
-      FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
-      FFT.compute(FFT_FORWARD);
-      FFT.complexToMagnitude();
-      totalFrequency += FFT.majorPeak();
-      numReadings++;
     }
   }
 
+  // Calculate and display the average frequency if envelope was above threshold
   if (numReadings > 0) {
     double averageFrequency = totalFrequency / numReadings;
-    // Serial.println("Average Frequency: " + String(averageFrequency) + " Hz");
+    
+    // Print average frequency value for plotting (Serial Plotter compatible)
+    Serial.print("averageFrequency:");
+    Serial.println(averageFrequency);
+
     SerialBT.println(averageFrequency);
-    // SerialBT.println(String(averageFrequency));
+
+    if (averageFrequency < 250.0) {
+      servoFS5.write(0);
+    } else {
+      //for (servPos = 180; servPos >= 0; servPos--) {
+      servoFS5.write(180);
+    }
+
+    delay(1000);
+
+    //return averageFrequency;
   }
 }
 
@@ -100,17 +152,29 @@ void setup() {
   allocateBuffers(bufferLen);
   i2s_install();
   i2s_setpin();
+
+  servoFS5.attach(PWM_PIN);
 }
 
 void loop() {
+  // Record and calculate the average frequency and envelope
+  //recordAndCalculateAverage();
+
+  // Sleep for a short period to allow plot visibility
+  //delay(5);  // Ensure a delay to make the plot visible at regular intervals
+
   if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
 
-    if (SerialBT.available()) {
-      char command = SerialBT.read();
-      if (command == 's') {
+    //if (SerialBT.available()) {
+      //char command = SerialBT.read();
+      //if (command == 's') {
         recordAndCalculateAverage();
-      }
-    }
+
+        delay(5);
+      //}
+    //}
+  } else {
+    digitalWrite(BLUE_LED, LOW);
   }
 }
