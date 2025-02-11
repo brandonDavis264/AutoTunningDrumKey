@@ -11,7 +11,9 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -106,11 +108,9 @@ class MainActivity2 : AppCompatActivity() {
         val adapter4 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, hoopTypeOptions)
         spinnerHoopType.adapter = adapter4
 
-        // Lug Count Spinner
-        val spinnerlugCount: Spinner = findViewById(R.id.spinner_lug_count)
-        val lugCountOptions = listOf("Select", "6", "8", "10", "12")
-        val adapter5 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, lugCountOptions)
-        spinnerlugCount.adapter = adapter5
+        // Lug Count Input
+        val textView: TextView = findViewById(R.id.lugCount);
+        val lugCount: EditText = findViewById(R.id.lugCountInt);
 
         // Record button functionality
         val record: Button = findViewById(R.id.record)
@@ -129,7 +129,7 @@ class MainActivity2 : AppCompatActivity() {
                 } else {
                     try {
                         connectToDevice("2C:BC:BB:4C:A9:8A")
-                        val intent = Intent(this, MainActivity3::class.java)
+                        val intent = Intent(this, MainActivity4::class.java)
                         startActivity(intent)
                     } catch (e: IOException) {
                         Toast.makeText(this, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
