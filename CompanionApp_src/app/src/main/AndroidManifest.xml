@@ -21,6 +21,11 @@
         android:theme="@style/Theme.CompApp"
         tools:targetApi="31">
         <activity
+            android:name=".MainActivity4"
+            android:exported="false"
+            android:label="@string/title_activity_main4"
+            android:theme="@style/Theme.CompApp" />
+        <activity
             android:name=".MainActivity3"
             android:exported="false"
             android:label="@string/title_activity_main3"
