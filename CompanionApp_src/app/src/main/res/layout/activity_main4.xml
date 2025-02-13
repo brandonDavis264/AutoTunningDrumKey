@@ -8,6 +8,27 @@
     android:background="@drawable/gradient_background"
     tools:context=".MainActivity4">
 
+    <TextView
+        android:id="@+id/noteSelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="@font/lilita_one_regular"
+        android:text="Select Note for Section"
+        android:textColor="@color/white"
+        android:textSize="32sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/note"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@+id/noteSelect"
+         />
+
     <ImageView
         android:id="@+id/snareDrumImage"
         android:layout_width="290dp"

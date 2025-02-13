@@ -130,6 +130,8 @@ class MainActivity2 : AppCompatActivity() {
                     try {
                         connectToDevice("2C:BC:BB:4C:A9:8A")
                         val intent = Intent(this, MainActivity4::class.java)
+                        var extraLug: Int = lugCount.text.toString().toInt()
+                        intent.putExtra("lugCount", extraLug)
                         startActivity(intent)
                     } catch (e: IOException) {
                         Toast.makeText(this, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()

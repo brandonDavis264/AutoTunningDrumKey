@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.ViewTreeObserver
 import android.view.animation.LinearInterpolator
+import android.widget.ArrayAdapter
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,19 +19,29 @@ import com.example.compapp.ui.theme.CompAppTheme
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.Spinner
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.io.IOException
 import kotlin.math.cos
 import kotlin.math.sin
 
 class MainActivity4 : ComponentActivity() {
     private val radius = 300
     private var currentRotation = 0f
+    private var listeningThread: Thread? = null
+    private var isListening = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main4)
 
+        val noteTuneTo: Spinner = findViewById(R.id.note)
+        val noteTuneOptions = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+        val adapter2 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, noteTuneOptions)
+        noteTuneTo.adapter = adapter2
+
         val frameLayout: FrameLayout = findViewById(R.id.frameLayout)
-        val lugCount = 8 // replace with user input value
+        val lugCount = intent.getIntExtra("lugCount", 8) // replace with user input value
         var curLug = 0
 
         frameLayout.viewTreeObserver.addOnGlobalLayoutListener(object :
@@ -43,7 +54,11 @@ class MainActivity4 : ComponentActivity() {
 
         val capture: Button = findViewById(R.id.captureSection)
         val sect: ImageView = findViewById(R.id.section)
+
+        startListening()
+
         capture.setOnClickListener {
+            sendCommandToESP('s')
             sect.setImageResource(R.drawable.greentri) //Just turn the thing Green!
         }
 
@@ -63,6 +78,58 @@ class MainActivity4 : ComponentActivity() {
             animator.interpolator = LinearInterpolator()
             animator.start()
         }
+    }
+
+    //https://stackoverflow.com/questions/49402001/how-to-set-visibility-in-kotlin
+
+
+    private fun sendCommandToESP(command: Char) {
+        val bluetoothSocket = AppBluetoothManager.bluetoothSocket
+
+        if (bluetoothSocket != null && bluetoothSocket.isConnected) {
+            try {
+                val outputStream = bluetoothSocket.outputStream
+                outputStream.write(command.code)
+                outputStream.flush()
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Toast.makeText(this, "Failed to send command", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this, "Bluetooth is not connected", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startListening() {
+        val bluetoothSocket = AppBluetoothManager.bluetoothSocket
+
+        if (bluetoothSocket == null || !bluetoothSocket.isConnected) {
+            isListening = false
+            return
+        }
+
+        isListening = true
+        listeningThread = Thread {
+            val inputStream = bluetoothSocket.inputStream
+            val buffer = ByteArray(1024)
+
+            while (isListening) {
+                try {
+                    val bytesRead = inputStream.read(buffer)
+                    if (bytesRead > 0) {
+                        val receivedData = String(buffer, 0, bytesRead).trim()
+                        runOnUiThread {
+                            // Debugging logs
+                            Toast.makeText(this, "Received: $receivedData", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    isListening = false
+                }
+            }
+        }
+        listeningThread?.start()
     }
 
     private fun spawnButtons(frameLayout: FrameLayout, count: Int) {
