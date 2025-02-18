@@ -9,29 +9,39 @@
 #define PWM_PIN 18
 #define I2S_PORT I2S_NUM_0
 
-BluetoothSerial SerialBT;
-int bufferLen = 4096; // Reduced buffer size
+BluetoothSerial SerialBT; 
 int BLUE_LED = 2;
 
-// Dynamic Buffers
-int16_t* sBuffer;
+//Signal Proccesing
+int16_t* sBuffer; // Dynamic Buffers
 double* vReal;
 double* vImag;
-
-// Servo object
-Servo servoFS5;
-
-// Servo position variable
-int servPos = 0;
-
+int bufferLen = 4096; //Sample Size
+//Desired frequency
+  /*TODO: Make variable Read from bluetooth
+  */ 
+  //PID Loop
+double targetFreak = 250;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
+
+// Servo Proccessing Variables 
+Servo servoFS5;
+int servPos = 0;
+const int stopPulse = 90;
+//Angle to turn the device
+  /*TODO: Algorithm to Calculate what the turn angle should be as the
+          the value gets closer to the frequency range 
+  */    
+int turnAngle = 180;
 
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
 const float envelopeThreshold = 300.0f;  // Envelope threshold for calculation
 
+
+#pragma region i2s Set Up
 void i2s_install() {
   const i2s_config_t i2s_config = {
     .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
@@ -56,7 +66,9 @@ void i2s_setpin() {
   };
   i2s_set_pin(I2S_PORT, &pin_config);
 }
+#pragma endregion
 
+#pragma region Signal Proccessing
 bool allocateBuffers(int length) {
   if (sBuffer) free(sBuffer);
   if (vReal) free(vReal);
@@ -89,7 +101,7 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
   // Serial.println(envelope);
 }
 
-void recordAndCalculateAverage() {
+double recordAndCalculateAverage() {
   unsigned long startTime = millis();
   double totalFrequency = 0;
   int numReadings = 0;
@@ -129,21 +141,50 @@ void recordAndCalculateAverage() {
     // Print average frequency value for plotting (Serial Plotter compatible)
     Serial.print("averageFrequency:");
     Serial.println(averageFrequency);
+    
 
     SerialBT.println(averageFrequency);
 
-    if (averageFrequency < 250.0) {
-      servoFS5.write(0);
-    } else {
-      //for (servPos = 180; servPos >= 0; servPos--) {
-      servoFS5.write(180);
-    }
-
-    delay(1000);
-
-    //return averageFrequency;
+    return averageFrequency;
   }
 }
+#pragma endregion
+
+#pragma region Motor Functionality 
+void rotateAngle(int angle, int speed) {
+  int movementSpeed = constrain(speed, 0, 90); // Ensure speed stays in valid range
+  int direction = (angle > 0) ? stopPulse + movementSpeed : stopPulse - movementSpeed;
+
+  int duration = map(abs(angle), 0, 360, 0, 1000); // Approximate time for rotation
+
+  servoFS5.write(direction);
+  delay(duration);
+  servoFS5.write(stopPulse); // Stop
+  delay(200);
+}
+
+void turnMotor(float freak, float targetFreak, int turnAngle){
+  int servoPos = 0;
+
+  // Adjust servo position smoothly
+  if (freak < targetFreak-10) {
+    
+    servoPos = turnAngle;  // Decrease position (tighten)
+    Serial.println("Tightening...");
+  } 
+  else if (freak > targetFreak+10) {
+    servoPos = -turnAngle;  // Increase position (loosen)
+    Serial.println("Loosening...");
+  } 
+  else {
+    Serial.println("Holding position...");
+  }
+
+  rotateAngle(servoPos, 90);
+  Serial.print("Servo Position: ");
+  Serial.println(servoPos);
+}
+#pragma endregion
 
 void setup() {
   Serial.begin(115200);
@@ -157,24 +198,12 @@ void setup() {
 }
 
 void loop() {
-  // Record and calculate the average frequency and envelope
-  //recordAndCalculateAverage();
-
-  // Sleep for a short period to allow plot visibility
-  //delay(5);  // Ensure a delay to make the plot visible at regular intervals
-
   if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
-
-    //if (SerialBT.available()) {
-      //char command = SerialBT.read();
-      //if (command == 's') {
-        recordAndCalculateAverage();
-
-        delay(5);
-      //}
-    //}
-  } else {
+    double freak = recordAndCalculateAverage();
+    turnMotor(freak, targetFreak, turnAngle);
+    delay(200); // Allow servo time to move
+  }else
     digitalWrite(BLUE_LED, LOW);
-  }
 }
+
