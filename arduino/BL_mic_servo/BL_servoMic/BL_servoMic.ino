@@ -105,7 +105,7 @@ double recordAndCalculateAverage() {
   unsigned long startTime = millis();
   double totalFrequency = 0;
   int numReadings = 0;
-
+  //Polling Makes The frequncy show up after
   while (millis() - startTime < 1) {
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
@@ -196,14 +196,46 @@ void setup() {
 
   servoFS5.attach(PWM_PIN);
 }
-
 void loop() {
   if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
+    double targetFreak = 250; // <- targetFreak gets reset every loop cycle!
+    double newTargetFreak = 0; // Declare outside the if block
+
     turnMotor(freak, targetFreak, turnAngle);
+
+    if (SerialBT.available()) {
+      String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
+      newTargetFreak = receivedData.toDouble(); // Assign new value
+
+      Serial.print("New target frequency: ");
+      Serial.println(newTargetFreak);
+
+      if (newTargetFreak > 0) { // Ensure valid frequency input
+        targetFreak = newTargetFreak; // Update targetFreak
+        Serial.print("Updated target frequency: ");
+        Serial.println(targetFreak);
+      }
+    }
+
     delay(200); // Allow servo time to move
-  }else
+  } else {
     digitalWrite(BLUE_LED, LOW);
+  }
 }
+// void loop() {
+//   if (SerialBT.hasClient()) {
+//     digitalWrite(BLUE_LED, HIGH);
+//     double freak = recordAndCalculateAverage();
+//     turnMotor(freak, targetFreak, turnAngle);
+//     double targetFreak = 250;
+
+//     // Check if there is data available from Bluetooth
+
+
+//     delay(200); // Allow servo time to move
+//   }else
+//     digitalWrite(BLUE_LED, LOW);
+// }
 
