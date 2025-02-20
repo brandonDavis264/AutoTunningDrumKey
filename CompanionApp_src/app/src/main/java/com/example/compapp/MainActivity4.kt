@@ -2,8 +2,10 @@ package com.example.compapp
 
 import android.animation.ObjectAnimator
 import android.os.Bundle
+import android.view.View
 import android.view.ViewTreeObserver
 import android.view.animation.LinearInterpolator
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -58,9 +60,18 @@ class MainActivity4 : ComponentActivity() {
         val adapter2 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, noteTuneOptions)
         noteTuneTo.adapter = adapter2
 
-        val selectedNote: String = noteTuneTo.selectedItem.toString()
-        val targetFrequency = getDrumFrequency(selectedNote)
-        //sendCommandToESP(toString())
+        noteTuneTo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selectedNote = noteTuneOptions[position] // Get the selected note
+                val targetFrequency = getDrumFrequency(selectedNote) // Convert to frequency
+                sendCommandToESP(targetFrequency.toString()) // Send via Bluetooth
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("Not yet implemented")
+            }
+        }
+
 
 
         val frameLayout: FrameLayout = findViewById(R.id.frameLayout)
@@ -81,7 +92,7 @@ class MainActivity4 : ComponentActivity() {
         startListening()
 
         capture.setOnClickListener {
-            sendCommandToESP('s')
+            sendCommandToESP("s")
             sect.setImageResource(R.drawable.greentri) //Just turn the thing Green!
         }
 
@@ -106,13 +117,13 @@ class MainActivity4 : ComponentActivity() {
     //https://stackoverflow.com/questions/49402001/how-to-set-visibility-in-kotlin
 
 
-    private fun sendCommandToESP(command: Char) {
+    private fun sendCommandToESP(command: String) {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
 
         if (bluetoothSocket != null && bluetoothSocket.isConnected) {
             try {
                 val outputStream = bluetoothSocket.outputStream
-                outputStream.write(command.code)
+                outputStream.write((command + "\n").toByteArray())
                 outputStream.flush()
             } catch (e: IOException) {
                 e.printStackTrace()
