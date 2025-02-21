@@ -21,7 +21,7 @@ int bufferLen = 4096; //Sample Size
   /*TODO: Make variable Read from bluetooth
   */ 
   //PID Loop
-double targetFreak = 250;
+double targetFreak = 0;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -200,25 +200,22 @@ void loop() {
   if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
-    double targetFreak = 250; // <- targetFreak gets reset every loop cycle!
     double newTargetFreak = 0; // Declare outside the if block
-
-    turnMotor(freak, targetFreak, turnAngle);
 
     if (SerialBT.available()) {
       String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
       newTargetFreak = receivedData.toDouble(); // Assign new value
 
       Serial.print("New target frequency: ");
-      Serial.println(newTargetFreak);
-
-      if (newTargetFreak > 0) { // Ensure valid frequency input
-        targetFreak = newTargetFreak; // Update targetFreak
-        Serial.print("Updated target frequency: ");
-        Serial.println(targetFreak);
-      }
+      targetFreak = newTargetFreak; // Update targetFreak
+      Serial.println(targetFreak);
+      // if (newTargetFreak > 0) { // Ensure valid frequency input
+      //   targetFreak = newTargetFreak; // Update targetFreak
+      //   Serial.print("Updated target frequency: ");
+      //   Serial.println(targetFreak);
+      // }
     }
-
+    turnMotor(freak, targetFreak, turnAngle);
     delay(200); // Allow servo time to move
   } else {
     digitalWrite(BLUE_LED, LOW);
