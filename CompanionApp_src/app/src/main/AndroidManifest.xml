@@ -31,12 +31,12 @@
             android:label="@string/title_activity_main3"
             android:theme="@style/Theme.CompApp" />
         <activity
-            android:name=".MainActivity2"
+            android:name=".Drum_Specs"
             android:exported="false"
             android:label="@string/title_activity_main2"
             android:theme="@style/Theme.CompApp" />
         <activity
-            android:name=".MainActivity"
+            android:name=".Welcome"
             android:exported="true"
             android:theme="@style/Theme.CompApp">
             <intent-filter>
