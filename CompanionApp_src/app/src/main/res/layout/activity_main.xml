@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@drawable/gradient_background"
+    android:background="@color/gray"
     android:padding="10dp">
 
     <TextView
@@ -19,14 +19,15 @@
 
     <Button
         android:id="@+id/getStartedBtn"
+        style="@style/roundButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="25dp"
-        android:backgroundTint="#0000FF"
         android:fontFamily="@font/lilita_one_regular"
         android:padding="16dp"
         android:text="@string/get_started_2"
         android:textAllCaps="false"
-        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textColor="@color/black"
         android:textSize="24sp" />
 </LinearLayout>

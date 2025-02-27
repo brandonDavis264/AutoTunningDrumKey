@@ -39,22 +39,12 @@ class MainActivity4 : ComponentActivity() {
 
         val noteTuneTo: Spinner = findViewById(R.id.note)
 
-        val noteTuneOptions = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+        val noteTuneOptions = listOf("B3")
         fun getDrumFrequency(note: String): Float {
             return when (note) {
-                "C" -> 130.81f  // Example frequency in Hz
-                "C#" -> 138.59f
-                "D" -> 146.83f
-                "D#" -> 155.56f
-                "E" -> 164.81f
-                "F" -> 174.61f
-                "F#" -> 185.00f
-                "G" -> 196.00f
-                "G#" -> 207.65f
-                "A" -> 220.00f
-                "A#" -> 233.08f
-                "B" -> 246.94f
+                "B3" -> 250.00f
                 else -> 0.0f // Default case
+
             }
         }
         val adapter2 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, noteTuneOptions)
