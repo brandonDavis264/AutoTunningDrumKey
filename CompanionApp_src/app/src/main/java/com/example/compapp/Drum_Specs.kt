@@ -90,7 +90,7 @@ class Drum_Specs : AppCompatActivity() {
                 } else {
                     connectToDevice(userDevice) { isConnected ->
                         if (isConnected) {
-                            val intent = Intent(this, MainActivity4::class.java)
+                            val intent = Intent(this, Tuning::class.java)
                             val extraLug: Int = lugCount.text.toString().toInt()
                             intent.putExtra("lugCount", extraLug)
                             startActivity(intent)
