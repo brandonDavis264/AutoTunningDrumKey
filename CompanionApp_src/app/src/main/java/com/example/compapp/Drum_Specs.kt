@@ -33,19 +33,19 @@ class Drum_Specs : AppCompatActivity() {
     private lateinit var selectedDeviceAdapter: BluetoothDeviceAdapter
     private var userDevice = ""
 
-    private val bluetoothStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED) {
-                val state = intent.getIntExtra(android.bluetooth.BluetoothAdapter.EXTRA_STATE, android.bluetooth.BluetoothAdapter.ERROR)
-                when (state) {
-                    android.bluetooth.BluetoothAdapter.STATE_OFF ->
-                        Toast.makeText(context, "Bluetooth turned off", Toast.LENGTH_LONG).show()
-                    android.bluetooth.BluetoothAdapter.STATE_ON ->
-                        Toast.makeText(context, "Bluetooth turned on", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
+//    private val bluetoothStateReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context, intent: Intent) {
+//            if (intent.action == android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED) {
+//                val state = intent.getIntExtra(android.bluetooth.BluetoothAdapter.EXTRA_STATE, android.bluetooth.BluetoothAdapter.ERROR)
+//                when (state) {
+//                    android.bluetooth.BluetoothAdapter.STATE_OFF ->
+//                        Toast.makeText(context, "Bluetooth turned off", Toast.LENGTH_LONG).show()
+//                    android.bluetooth.BluetoothAdapter.STATE_ON ->
+//                        Toast.makeText(context, "Bluetooth turned on", Toast.LENGTH_LONG).show()
+//                }
+//            }
+//        }
+//    }
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +69,7 @@ class Drum_Specs : AppCompatActivity() {
             }
         }
 
-        registerReceiver(bluetoothStateReceiver, IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
+//        registerReceiver(bluetoothStateReceiver, IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
 
         val lugCount: EditText = findViewById(R.id.lugCountInt)
         val record: Button = findViewById(R.id.record)
@@ -212,12 +212,18 @@ class Drum_Specs : AppCompatActivity() {
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        selectedDeviceAdapter = BluetoothDeviceAdapter(pairedDevicesList) { selectedDevice -> userDevice = selectedDevice.address }
+//        selectedDeviceAdapter = BluetoothDeviceAdapter(pairedDevicesList) { selectedDevice -> userDevice = selectedDevice.address }
+        selectedDeviceAdapter = BluetoothDeviceAdapter(pairedDevicesList) { selectedDevice ->
+            userDevice = selectedDevice.address
+            SelectedBluetoothDevice.name = selectedDevice.name
+            SelectedBluetoothDevice.address = selectedDevice.address
+        }
+
         recyclerView.adapter = selectedDeviceAdapter
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(bluetoothStateReceiver)
-    }
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        unregisterReceiver(bluetoothStateReceiver)
+//    }
 }
