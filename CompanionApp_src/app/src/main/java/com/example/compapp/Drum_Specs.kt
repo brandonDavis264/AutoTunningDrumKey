@@ -71,7 +71,11 @@ class Drum_Specs : AppCompatActivity() {
 
         registerReceiver(bluetoothStateReceiver, IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
 
-        val lugCount: EditText = findViewById(R.id.lugCountInt)
+        val lugCount: Spinner = findViewById(R.id.lugCountInt)
+        val validCounts = listOf("Select", "2", "4", "6", "8", "10")
+        val adapterLug = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, validCounts)
+        lugCount.adapter = adapterLug
+
         val record: Button = findViewById(R.id.record)
 
         record.setOnClickListener {
@@ -91,7 +95,7 @@ class Drum_Specs : AppCompatActivity() {
                     connectToDevice(userDevice) { isConnected ->
                         if (isConnected) {
                             val intent = Intent(this, Tuning::class.java)
-                            val extraLug: Int = lugCount.text.toString().toInt()
+                            val extraLug: Int = lugCount.getSelectedItem().toString().toInt()
                             intent.putExtra("lugCount", extraLug)
                             startActivity(intent)
                         } else {
