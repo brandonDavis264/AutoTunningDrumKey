@@ -18,10 +18,7 @@ double* vReal;
 double* vImag;
 int bufferLen = 4096; //Sample Size
 //Desired frequency
-  /*TODO: Make variable Read from bluetooth
-  */ 
-  //PID Loop
-double targetFreak = 250;
+double targetFreak = 0;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -29,16 +26,13 @@ ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 Servo servoFS5;
 int servPos = 0;
 const int stopPulse = 90;
-//Angle to turn the device
-  /*TODO: Algorithm to Calculate what the turn angle should be as the
-          the value gets closer to the frequency range 
-  */    
-int turnAngle = 180;
+//Angle to turn the device[[=]]  
+int turnAngle = 90; 
 
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
-const float envelopeThreshold = 300.0f;  // Envelope threshold for calculation
+const float envelopeThreshold = 600.0f;  // Envelope threshold for calculation
 
 
 #pragma region i2s Set Up
@@ -96,16 +90,20 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
+  Serial.print("Target frequency: ");
+  Serial.println(targetFreak);
+  Serial.print("Reached Threshold:");
+  Serial.println(envelopeThreshold);
   // Print envelope value for plotting (Serial Plotter compatible)
-  // Serial.print("envelope:");
-  // Serial.println(envelope);
+  Serial.print("envelope:");
+  Serial.println(envelope);
 }
 
 double recordAndCalculateAverage() {
   unsigned long startTime = millis();
   double totalFrequency = 0;
   int numReadings = 0;
-
+  //Polling Makes The frequncy show up after
   while (millis() - startTime < 1) {
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
@@ -128,6 +126,7 @@ double recordAndCalculateAverage() {
         FFT.compute(FFT_FORWARD);
         FFT.complexToMagnitude();
         totalFrequency += FFT.majorPeak();
+
         numReadings++;
         break;
       }
@@ -140,10 +139,9 @@ double recordAndCalculateAverage() {
     
     // Print average frequency value for plotting (Serial Plotter compatible)
     Serial.print("averageFrequency:");
-    Serial.println(averageFrequency);
-    
-
     SerialBT.println(averageFrequency);
+    Serial.println(averageFrequency);
+  
 
     return averageFrequency;
   }
@@ -196,14 +194,21 @@ void setup() {
 
   servoFS5.attach(PWM_PIN);
 }
-
 void loop() {
   if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
+    double newTargetFreak = 0; // Declare outside the if block
+
+    if (SerialBT.available()) {
+      String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
+      newTargetFreak = receivedData.toDouble(); // Assign new value
+
+      targetFreak = newTargetFreak; // Update targetFreak
+    }
     turnMotor(freak, targetFreak, turnAngle);
     delay(200); // Allow servo time to move
-  }else
+  }else {
     digitalWrite(BLUE_LED, LOW);
+  }
 }
-

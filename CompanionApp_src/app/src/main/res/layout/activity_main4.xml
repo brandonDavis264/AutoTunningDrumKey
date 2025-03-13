@@ -12,9 +12,9 @@
         android:id="@+id/noteSelect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="48dp"
         android:fontFamily="@font/lilita_one_regular"
-        android:text="Section Target Note"
+        android:text="Select Target Note"
         android:textColor="@color/white"
         android:textSize="32sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -95,7 +95,7 @@
         android:textColor="@color/white"
         android:textSize="18sp"
         android:textStyle="bold"
-
+        android:fontFamily="@font/lilita_one_regular"
         app:layout_constraintBottom_toTopOf="@+id/initialNote"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.229"
@@ -111,6 +111,7 @@
         android:textColor="@color/white"
         android:textSize="18sp"
         android:textStyle="bold"
+        android:fontFamily="@font/lilita_one_regular"
         app:layout_constraintBottom_toTopOf="@+id/currentNote"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.767"
@@ -120,47 +121,64 @@
 
     <TextView
         android:id="@+id/currentNote"
-        android:layout_width="113dp"
-        android:layout_height="122dp"
+        android:layout_width="114dp"
+        android:layout_height="99dp"
         android:layout_margin="8dp"
-        android:background="@android:color/white"
+        android:background="@drawable/roundtv"
         android:gravity="center"
         android:textColor="@android:color/black"
-        android:textSize="16sp"
+        android:textSize="32sp"
+        android:fontFamily="@font/lilita_one_regular"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.774"
+        app:layout_constraintHorizontal_bias="0.771"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.955" />
+        app:layout_constraintVertical_bias="0.944" />
 
     <TextView
         android:id="@+id/initialNote"
-        android:layout_width="113dp"
-        android:layout_height="122dp"
+        android:layout_width="114dp"
+        android:layout_height="99dp"
         android:layout_margin="8dp"
-        android:background="@android:color/white"
+        android:background="@drawable/roundtv"
         android:gravity="center"
         android:textColor="@android:color/black"
-        android:textSize="16sp"
+        android:textSize="32sp"
+        android:fontFamily="@font/lilita_one_regular"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.224"
+        app:layout_constraintHorizontal_bias="0.228"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.955" />
+        app:layout_constraintVertical_bias="0.944" />
+
+    <TextView
+        android:id="@+id/bottomActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@android:color/black"
+        android:gravity="end|center_vertical"
+        android:padding="8dp"
+        android:textAlignment="viewEnd"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
-                <FrameLayout
+
+    <FrameLayout
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"></FrameLayout>
+        app:layout_constraintVertical_bias="0.0"> </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

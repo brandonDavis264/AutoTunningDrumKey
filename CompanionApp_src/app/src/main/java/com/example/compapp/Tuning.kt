@@ -1,41 +1,68 @@
 package com.example.compapp
 
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import androidx.activity.ComponentActivity
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
 import kotlin.math.cos
 import kotlin.math.sin
 
-class Tuning : ComponentActivity() {
+class Tuning : AppCompatActivity() {
     private val radius = 250
     private var currentRotation = 0f
     private var listeningThread: Thread? = null
     private var isListening = false
+    private lateinit var bottomActionBar: TextView
+    private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+
+    private val bluetoothStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+
+                val deviceName = SelectedBluetoothDevice?.name ?: "Unknown Device"
+                val deviceAddress = SelectedBluetoothDevice?.address ?: "No Address"
+
+                val connectivityStatus = when (state) {
+                    BluetoothAdapter.STATE_OFF -> "$deviceName: $deviceAddress [Disconnected]"
+                    BluetoothAdapter.STATE_ON -> "$deviceName: $deviceAddress [Connected]"
+                    else -> "$deviceName: $deviceAddress [Unknown State]"
+                }
+
+
+                runOnUiThread {
+                    bottomActionBar.text = connectivityStatus
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main4)
+        supportActionBar?.title = "Tuning"
+
+        bottomActionBar = findViewById(R.id.bottomActionBar)
+
+        // Register BroadcastReceiver for Bluetooth state changes
+        val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        registerReceiver(bluetoothStateReceiver, filter)
+
+        // Initial Bluetooth state update
+        updateBluetoothStatus()
 
         val noteTuneTo: Spinner = findViewById(R.id.note)
-        val initialN: TextView = findViewById(R.id.initialNote)
+        val noteTuneOptions = listOf(" ", "B3", "D#4")
 
-        val noteTuneOptions = listOf("B3")
-        fun getDrumFrequency(note: String): Float {
-            return when (note) {
-                "B3" -> 250.00f
-                else -> 0.0f // Default case
-
-            }
-        }
         val adapter2 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, noteTuneOptions)
         noteTuneTo.adapter = adapter2
 
@@ -46,17 +73,11 @@ class Tuning : ComponentActivity() {
                 sendCommandToESP(targetFrequency.toString())
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                TODO("Not yet implemented")
-            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-
-
         val frameLayout: FrameLayout = findViewById(R.id.frameLayout)
-        val lugCount = intent.getIntExtra("lugCount", 8) // replace with user input value
-        var curLug = 0
-
+        val lugCount = intent.getIntExtra("lugCount", 8)
         frameLayout.viewTreeObserver.addOnGlobalLayoutListener(object :
             ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -65,32 +86,42 @@ class Tuning : ComponentActivity() {
             }
         })
 
-//        val capture: Button = findViewById(R.id.captureSection)
-//        val sect: ImageView = findViewById(R.id.section)
-
         startListening()
+    }
 
-//        capture.setOnClickListener {
-//            sendCommandToESP("s")
-////            sect.setImageResource(R.drawable.greentri)
-//        }
+    private fun updateBluetoothStatus() {
+        val deviceName = SelectedBluetoothDevice?.name ?: "Unknown Device"
+        val deviceAddress = SelectedBluetoothDevice?.address ?: "No Address"
 
-//        val nxt: Button = findViewById(R.id.nxtSection)
+        val status = if (bluetoothAdapter?.isEnabled == true) {
+            "$deviceName: $deviceAddress [Connected]"
+        } else {
+            "$deviceName: $deviceAddress [Disconnected]"
+        }
 
-//        nxt.setOnClickListener {
-//            if (curLug % 2 == 0)  {
-//                currentRotation = (currentRotation + 180f) % 360
-//            }
-//            else {
-//                currentRotation = (currentRotation + 180f + (360/lugCount)) % 360
-//            } // Ensure rotation stays within 0-360
-////            sect.setImageResource(R.drawable.redtri)
-//            curLug = (curLug + 1) % lugCount
-//            val animator = ObjectAnimator.ofFloat(sect, "rotation", currentRotation)
-//            animator.duration = 300
-//            animator.interpolator = LinearInterpolator()
-//            animator.start()
-//        }
+        bottomActionBar.text = status
+    }
+
+    private fun getDrumFrequency(note: String): Float {
+        return when (note) {
+            "B3" -> 250.00f
+            "D#4" -> 311.13f
+            else -> 0.0f
+        }
+    }
+
+    private fun freqToNote(note: Float): String {
+        val noteMap = mapOf(
+            "G2" to 98.00f, "G#2" to 103.83f, "A2" to 110.00f, "A#2" to 116.54f,
+            "B2" to 123.47f, "C3" to 130.81f, "C#3" to 138.59f, "E3" to 164.81f,
+            "F3" to 174.61f, "F#3" to 185.00f, "G3" to 196.00f, "G#3" to 207.65f,
+            "A3" to 220.00f, "A#3" to 233.08f, "B3" to 246.94f, "C4" to 261.63f,
+            "C#4" to 277.18f, "D4" to 293.66f, "D#4" to 311.13f, "E4" to 329.63f,
+            "F4" to 349.23f, "F#4" to 369.99f, "G4" to 392.00f, "G#4" to 415.30f,
+            "A4" to 440.00f
+        )
+
+        return noteMap.minByOrNull { (_, frequency) -> kotlin.math.abs(frequency - note) }?.key ?: "N/A"
     }
 
     private fun sendCommandToESP(command: String) {
@@ -110,44 +141,6 @@ class Tuning : ComponentActivity() {
         }
     }
 
-    fun freqToNote(note: Float, tolerance: Float = 1.0f): String {
-        val noteMap = mapOf(
-            "G2" to 98.00f,
-            "G#2" to 103.83f,
-            "A2" to 110.00f,
-            "A#2" to 116.54f,
-            "B2" to 123.47f,
-            "C3" to 130.81f,
-            "C#3" to 138.59f,
-            "E3" to 164.81f,
-            "F3" to 174.61f,
-            "F#3" to 185.00f,
-            "G3" to 196.00f,
-            "G#3" to 207.65f,
-            "A3" to 220.00f,
-            "A#3" to 233.08f,
-            "B3" to 246.94f,
-            "C4" to 261.63f,
-            "C#4" to 277.18f,
-            "D4" to 293.66f,
-            "D#4" to 311.13f,
-            "E4" to 329.63f,
-            "F4" to 349.23f,
-            "F#4" to 369.99f,
-            "G4" to 392.00f,
-            "G#4" to 415.30f,
-            "A4" to 440.00f
-        )
-
-        for ((noteName, freq) in noteMap) {
-            if (note in (freq - tolerance)..(freq + tolerance)) {
-                return noteName
-            }
-        }
-
-        return "N/A" // Default case
-    }
-
     private fun startListening() {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
 
@@ -160,18 +153,24 @@ class Tuning : ComponentActivity() {
         listeningThread = Thread {
             val inputStream = bluetoothSocket.inputStream
             val buffer = ByteArray(1024)
-            val currentN: TextView = findViewById(R.id.currentNote)
+            val currentNote: TextView = findViewById(R.id.currentNote)
 
             while (isListening) {
                 try {
                     val bytesRead = inputStream.read(buffer)
                     if (bytesRead > 0) {
                         val receivedData = String(buffer, 0, bytesRead).trim()
-//                        runOnUiThread {
-//                            // Debugging logs
-//                            Toast.makeText(this, "Received: $receivedData", Toast.LENGTH_SHORT).show()
-//                        }
-                        currentN.text = freqToNote(receivedData.toFloat())
+                        val frequency = receivedData.toFloatOrNull() ?: 0f
+
+                        if (frequency > 97.99) {
+                            val detectedNote = freqToNote(receivedData.toFloat())
+                            runOnUiThread {
+                                val formattedFrequency = String.format("%.2f", receivedData.toFloatOrNull() ?: 0f)
+                                Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
+
+                                currentNote.text = detectedNote
+                            }
+                        }
                     }
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -185,7 +184,13 @@ class Tuning : ComponentActivity() {
     private fun spawnButtons(frameLayout: FrameLayout, count: Int) {
         val centerX = frameLayout.width / 2
         val centerY = frameLayout.height / 2
-        var selectedButton: Button? = null  // Track the currently selected button
+        var selectedButton: Button? = null
+        val initialNoteTextView: TextView = findViewById(R.id.initialNote)
+
+        // Predefined list of possible initial notes
+        val noteOptions = listOf("G2", "A2", "B2", "C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4")
+
+        val blugMap = mutableMapOf<Button, Blug>()
 
         for (i in 0 until count) {
             val angle = i * 2 * Math.PI / count
@@ -194,23 +199,32 @@ class Tuning : ComponentActivity() {
 
             val buttonSize = 70
 
+            val initialNote = noteOptions.random() // Assign a random note
+
             val button = Button(this).apply {
                 text = "L ${i + 1}"
                 setTextColor(Color.LTGRAY)
-                setBackgroundResource(R.drawable.diamond) // Default background
+                setBackgroundResource(R.drawable.diamond)
                 layoutParams = FrameLayout.LayoutParams(buttonSize, buttonSize)
             }
 
+            val blug = Blug("L ${i + 1}").apply {
+                initialFreq = initialNote
+            }
+            blugMap[button] = blug
+
             button.setOnClickListener {
-
+                selectedButton?.setTextColor(Color.LTGRAY)
                 selectedButton?.setBackgroundResource(R.drawable.diamond)
-
 
                 if (selectedButton == button) {
                     selectedButton = null
+                    initialNoteTextView.text = "" // Clear the initial note display
                 } else {
+                    button.setTextColor(Color.BLACK)
                     button.setBackgroundResource(R.drawable.diamond_p)
                     selectedButton = button
+                    initialNoteTextView.text = blug.initialFreq // Display the initial note
                 }
             }
 
@@ -224,4 +238,13 @@ class Tuning : ComponentActivity() {
     }
 
 
+    class Blug(name: String) {
+        var initialFreq: String = ""
+        var currRotation: Float = 0.0f
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(bluetoothStateReceiver)
+    }
 }
