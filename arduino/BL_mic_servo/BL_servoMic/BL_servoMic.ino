@@ -26,8 +26,7 @@ ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 Servo servoFS5;
 int servPos = 0;
 const int stopPulse = 90;
-//Angle to turn the device[[=]]  
-int turnAngle = 90; 
+int maxTurnAngle = 90; // limit on how much we can turn the motor at a time
 
 // Envelope Follower variables
 float envelope = 0.0f;
@@ -149,38 +148,37 @@ double recordAndCalculateAverage() {
 #pragma endregion
 
 #pragma region Motor Functionality 
-void rotateAngle(int angle, int speed) {
-  int movementSpeed = constrain(speed, 0, 90); // Ensure speed stays in valid range
-  int direction = (angle > 0) ? stopPulse + movementSpeed : stopPulse - movementSpeed;
-
-  int duration = map(abs(angle), 0, 360, 0, 1000); // Approximate time for rotation
-
+void rotate(int angle) {
+  // motor controls:
+  //   90 = neutral (no motion)
+  // < 90 = turns one direction at a given speed
+  // > 90 = turns in the opposite direction at a given speed
+  int direction = (angle > 0) ? 135 : 45;
+  
+  // how much we want to turn scaled at a range from 0 to 1000
+  int turningFactor = map(abs(angle), 0, 360, 0, 1000);
+  
   servoFS5.write(direction);
-  delay(duration);
-  servoFS5.write(stopPulse); // Stop
+  delay(turningFactor);
+  servoFS5.write(90); // set to neutral or stop
   delay(200);
 }
 
-void turnMotor(float freak, float targetFreak, int turnAngle){
-  int servoPos = 0;
-
-  // Adjust servo position smoothly
-  if (freak < targetFreak-10) {
-    
-    servoPos = turnAngle;  // Decrease position (tighten)
-    Serial.println("Tightening...");
-  } 
-  else if (freak > targetFreak+10) {
-    servoPos = -turnAngle;  // Increase position (loosen)
-    Serial.println("Loosening...");
-  } 
-  else {
-    Serial.println("Holding position...");
+void turnMotor(float freak, float targetFreak){
+  int error = targetFreak - freak;
+  int scale = 1;
+  
+  int angle = scale * error;
+  angle = constrain(angle, -maxTurnAngle, maxTurnAngle);
+  
+  if (abs(angle) > 3) {
+      rotate(angle);
+      
+      Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
+       + targetFreak + " | Error: " + error + " | Angle: " + angle);
+  } else{
+      Serial.println("Adjustment too small - holding position");
   }
-
-  rotateAngle(servoPos, 90);
-  Serial.print("Servo Position: ");
-  Serial.println(servoPos);
 }
 #pragma endregion
 
@@ -206,11 +204,10 @@ void loop() {
 
       targetFreak = newTargetFreak; // Update targetFreak
     }
-    turnMotor(freak, targetFreak, turnAngle);
+    turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
   }else {
     digitalWrite(BLUE_LED, LOW);
   }
 }
-
 
