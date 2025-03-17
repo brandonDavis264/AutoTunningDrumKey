@@ -61,7 +61,8 @@ class Tuning : AppCompatActivity() {
         updateBluetoothStatus()
 
         val noteTuneTo: Spinner = findViewById(R.id.note)
-        val noteTuneOptions = listOf(" ", "B3", "D#4")
+        val noteTuneOptions = listOf("Select", "B3", "D#4")
+        val targetNote: TextView = findViewById(R.id.TargetNote)
 
         val adapter2 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, noteTuneOptions)
         noteTuneTo.adapter = adapter2
@@ -69,8 +70,10 @@ class Tuning : AppCompatActivity() {
         noteTuneTo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedNote = noteTuneOptions[position]
-                val targetFrequency = getDrumFrequency(selectedNote)
-                sendCommandToESP(targetFrequency.toString())
+                //val targetFrequency = getDrumFrequency(selectedNote)
+                //sendCommandToESP(targetFrequency.toString())
+                targetNote.text = selectedNote
+                sendCommandToESP(selectedNote)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -185,12 +188,6 @@ class Tuning : AppCompatActivity() {
         val centerX = frameLayout.width / 2
         val centerY = frameLayout.height / 2
         var selectedButton: Button? = null
-        val initialNoteTextView: TextView = findViewById(R.id.initialNote)
-
-        // Predefined list of possible initial notes
-        val noteOptions = listOf("G2", "A2", "B2", "C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4")
-
-        val blugMap = mutableMapOf<Button, Blug>()
 
         for (i in 0 until count) {
             val angle = i * 2 * Math.PI / count
@@ -199,8 +196,6 @@ class Tuning : AppCompatActivity() {
 
             val buttonSize = 70
 
-            val initialNote = noteOptions.random() // Assign a random note
-
             val button = Button(this).apply {
                 text = "L ${i + 1}"
                 setTextColor(Color.LTGRAY)
@@ -208,23 +203,16 @@ class Tuning : AppCompatActivity() {
                 layoutParams = FrameLayout.LayoutParams(buttonSize, buttonSize)
             }
 
-            val blug = Blug("L ${i + 1}").apply {
-                initialFreq = initialNote
-            }
-            blugMap[button] = blug
-
             button.setOnClickListener {
                 selectedButton?.setTextColor(Color.LTGRAY)
                 selectedButton?.setBackgroundResource(R.drawable.diamond)
-
+                
                 if (selectedButton == button) {
                     selectedButton = null
-                    initialNoteTextView.text = "" // Clear the initial note display
                 } else {
                     button.setTextColor(Color.BLACK)
                     button.setBackgroundResource(R.drawable.diamond_p)
                     selectedButton = button
-                    initialNoteTextView.text = blug.initialFreq // Display the initial note
                 }
             }
 
@@ -237,11 +225,19 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-
-    class Blug(name: String) {
-        var initialFreq: String = ""
-        var currRotation: Float = 0.0f
-    }
+//    private fun starPattern(count: Int): MutableMap<String, List<String>> {
+//        val starPattern = mutableMapOf<String, List<String>>()
+//
+//        for (i in 0 until count) {
+//            val sequence = listOf<String>()
+//            for (j in i until count) {
+//
+//            }
+//            starPattern["L ${i + 1}"] =
+//        }
+//
+//        return starPattern
+//    }
 
     override fun onDestroy() {
         super.onDestroy()

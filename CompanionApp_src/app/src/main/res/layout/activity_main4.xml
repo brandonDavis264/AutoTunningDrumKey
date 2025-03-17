@@ -12,7 +12,7 @@
         android:id="@+id/noteSelect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="32dp"
         android:fontFamily="@font/lilita_one_regular"
         android:text="Select Target Note"
         android:textColor="@color/white"
@@ -25,9 +25,11 @@
         android:id="@+id/note"
         android:layout_width="match_parent"
         android:layout_height="48dp"
+        android:layout_marginTop="24dp"
+        android:background="@color/dark_gray"
         android:textColor="@color/white"
         app:layout_constraintTop_toBottomOf="@+id/noteSelect"
-         />
+        tools:layout_editor_absoluteX="16dp" />
 
     <ImageView
         android:id="@+id/snareDrumImage"
@@ -88,20 +90,20 @@
 <!--        app:layout_constraintStart_toEndOf="@+id/initialNote" />-->
 
     <TextView
-        android:id="@+id/initialNoteLabel"
+        android:id="@+id/TargetNoteLabel"
         android:layout_width="113dp"
         android:layout_height="31dp"
-        android:text="   Initial Note"
+        android:fontFamily="@font/lilita_one_regular"
+        android:text="   Target Note"
         android:textColor="@color/white"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:fontFamily="@font/lilita_one_regular"
-        app:layout_constraintBottom_toTopOf="@+id/initialNote"
+        app:layout_constraintBottom_toTopOf="@+id/TargetNote"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.229"
+        app:layout_constraintHorizontal_bias="0.234"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.983" />
+        app:layout_constraintVertical_bias="0.982" />
 
     <TextView
         android:id="@+id/currentNoteLabel"
@@ -137,7 +139,7 @@
         app:layout_constraintVertical_bias="0.944" />
 
     <TextView
-        android:id="@+id/initialNote"
+        android:id="@+id/TargetNote"
         android:layout_width="114dp"
         android:layout_height="99dp"
         android:layout_margin="8dp"
@@ -168,9 +170,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <Switch
+        android:id="@+id/switch2"
+        android:layout_width="127dp"
+        android:layout_height="53dp"
+        android:text="Open Mic"
+        android:fontFamily="@font/lilita_one_regular"
+        app:layout_constraintBottom_toTopOf="@+id/bottomActionBar"
+        app:layout_constraintEnd_toStartOf="@+id/currentNote"
+        app:layout_constraintStart_toEndOf="@+id/TargetNote"
+        app:layout_constraintTop_toBottomOf="@+id/snareDrumImage"
+        app:layout_constraintVertical_bias="0.841" />
 
 
-    <FrameLayout
+            <FrameLayout
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

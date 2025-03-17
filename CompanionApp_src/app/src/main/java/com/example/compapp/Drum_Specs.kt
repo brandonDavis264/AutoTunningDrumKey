@@ -56,6 +56,14 @@ class Drum_Specs : AppCompatActivity() {
         bluetoothManager = getSystemService(BluetoothManager::class.java)
         AppBluetoothManager.bluetoothAdapter = bluetoothManager.adapter
 
+        requestBluetoothPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(this, "Bluetooth permission denied.", Toast.LENGTH_LONG).show()
+            }
+        }
+
         displayPairedDevices()
         userDevice = selectedDeviceAdapter.getSelectedDevice()?.address ?: ""
 
@@ -72,7 +80,7 @@ class Drum_Specs : AppCompatActivity() {
 //        registerReceiver(bluetoothStateReceiver, IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
 
         val lugCount: Spinner = findViewById(R.id.lugCountInt)
-        val validCounts = listOf("Select", "2", "4", "6", "8", "10")
+        val validCounts = listOf("Select", "4", "6", "8", "10", "12")
         val adapterLug = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, validCounts)
         lugCount.adapter = adapterLug
 
