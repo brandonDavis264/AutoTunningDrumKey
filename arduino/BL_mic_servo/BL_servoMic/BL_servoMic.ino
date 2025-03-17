@@ -212,5 +212,3 @@ void loop() {
     digitalWrite(BLUE_LED, LOW);
   }
 }
-
-

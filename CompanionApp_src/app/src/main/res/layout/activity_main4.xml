@@ -5,16 +5,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/light_blue"
-    tools:context=".MainActivity4">
+    android:background="@color/gray"
+    tools:context=".Tuning">
 
     <TextView
         android:id="@+id/noteSelect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="32dp"
         android:fontFamily="@font/lilita_one_regular"
-        android:text="Select Note for Section"
+        android:text="Select Target Note"
         android:textColor="@color/white"
         android:textSize="32sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,71 +25,173 @@
         android:id="@+id/note"
         android:layout_width="match_parent"
         android:layout_height="48dp"
+        android:layout_marginTop="24dp"
+        android:background="@color/dark_gray"
         android:textColor="@color/white"
         app:layout_constraintTop_toBottomOf="@+id/noteSelect"
-         />
+        tools:layout_editor_absoluteX="16dp" />
 
     <ImageView
         android:id="@+id/snareDrumImage"
         android:layout_width="290dp"
         android:layout_height="253dp"
-        android:layout_marginTop="236dp"
         android:src="@drawable/snare"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <ImageView
-        android:id="@+id/section"
-        android:layout_width="290dp"
-        android:layout_height="253dp"
-        android:layout_marginTop="236dp"
-        android:src="@drawable/redtri"
-        android:alpha="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/captureSection"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#0000FF"
-        android:fontFamily="@font/lilita_one_regular"
-        android:text="Capture Section"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/nxtSection"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/snareDrumImage"
-        app:layout_constraintVertical_bias="0.754" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.5"/>
 
-    <Button
-        android:id="@+id/nxtSection"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="28dp"
-        android:backgroundTint="#0000FF"
+
+<!--    <ImageView-->
+<!--        android:id="@+id/section"-->
+<!--        android:layout_width="290dp"-->
+<!--        android:layout_height="253dp"-->
+<!--        android:layout_marginTop="236dp"-->
+<!--        android:src="@drawable/redtri"-->
+<!--        android:alpha="0.5"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        />-->
+
+<!--    <Button-->
+<!--        android:id="@+id/captureSection"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:backgroundTint="#0000FF"-->
+<!--        android:fontFamily="@font/lilita_one_regular"-->
+<!--        android:text="Capture Section"-->
+<!--        android:textAllCaps="false"-->
+<!--        android:textColor="@color/white"-->
+<!--        android:textSize="24sp"-->
+<!--        app:layout_constraintBottom_toTopOf="@+id/nxtSection"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/snareDrumImage"-->
+<!--        app:layout_constraintVertical_bias="0.754" />-->
+
+<!--    <Button-->
+<!--        android:id="@+id/nxtSection"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginBottom="28dp"-->
+<!--        android:backgroundTint="#0000FF"-->
+<!--        android:fontFamily="@font/lilita_one_regular"-->
+<!--        android:text="Next Section"-->
+<!--        android:textAllCaps="false"-->
+<!--        android:textColor="@color/white"-->
+<!--        android:textSize="24sp"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent" />-->
+
+    <!--        app:layout_constraintHorizontal_weight="1"-->
+<!--        app:layout_constraintStart_toEndOf="@+id/initialNote" />-->
+
+    <TextView
+        android:id="@+id/TargetNoteLabel"
+        android:layout_width="113dp"
+        android:layout_height="31dp"
         android:fontFamily="@font/lilita_one_regular"
-        android:text="Next Section"
-        android:textAllCaps="false"
+        android:text="   Target Note"
         android:textColor="@color/white"
-        android:textSize="24sp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/TargetNote"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.234"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.982" />
+
+    <TextView
+        android:id="@+id/currentNoteLabel"
+        android:layout_width="113dp"
+        android:layout_height="31dp"
+        android:text=" Current Note"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/lilita_one_regular"
+        app:layout_constraintBottom_toTopOf="@+id/currentNote"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.767"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.982" />
+
+    <TextView
+        android:id="@+id/currentNote"
+        android:layout_width="114dp"
+        android:layout_height="99dp"
+        android:layout_margin="8dp"
+        android:background="@drawable/roundtv"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        android:textSize="32sp"
+        android:fontFamily="@font/lilita_one_regular"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.771"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.944" />
+
+    <TextView
+        android:id="@+id/TargetNote"
+        android:layout_width="114dp"
+        android:layout_height="99dp"
+        android:layout_margin="8dp"
+        android:background="@drawable/roundtv"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        android:textSize="32sp"
+        android:fontFamily="@font/lilita_one_regular"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.228"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.944" />
+
+    <TextView
+        android:id="@+id/bottomActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@android:color/black"
+        android:gravity="end|center_vertical"
+        android:padding="8dp"
+        android:textAlignment="viewEnd"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <Switch
+        android:id="@+id/switch2"
+        android:layout_width="127dp"
+        android:layout_height="53dp"
+        android:text="Open Mic"
+        android:fontFamily="@font/lilita_one_regular"
+        app:layout_constraintBottom_toTopOf="@+id/bottomActionBar"
+        app:layout_constraintEnd_toStartOf="@+id/currentNote"
+        app:layout_constraintStart_toEndOf="@+id/TargetNote"
+        app:layout_constraintTop_toBottomOf="@+id/snareDrumImage"
+        app:layout_constraintVertical_bias="0.841" />
 
-    <FrameLayout
+
+            <FrameLayout
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-    </FrameLayout>
+        app:layout_constraintVertical_bias="0.0"> </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
