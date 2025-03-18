@@ -239,19 +239,19 @@ class Tuning : AppCompatActivity() {
                         if (buttonText == expectedText) {
                             Log.d("DEBUG", "Correct press: $buttonText (Step: $sequenceIndex)")
 
-                            // Stop pulsing on the previous button
-                            stopPulsingGlowEffect()
+                            // Reset the previous button
+                            selectedButton?.let {
+                                stopPulsingGlowEffect()
+                                stopScalingEffect(it)
+                                it.setBackgroundResource(R.drawable.diamond)
+                            }
 
-                            // Apply scale animation to the current button
-                            applyScalingEffect(button)
-
-                            // Reset previous selection
-                            selectedButton?.setTextColor(Color.DKGRAY)
-                            selectedButton?.setBackgroundResource(R.drawable.diamond)
-
-                            // Apply new selection
+                            // Apply "diamond_p" background and scaling to the **current** button
                             button.setTextColor(Color.BLACK)
                             button.setBackgroundResource(R.drawable.diamond_p)
+                            applyScalingEffect(button)
+
+                            // Update the selected button reference
                             selectedButton = button
 
                             sequenceIndex++ // Move to next button in sequence
@@ -274,7 +274,8 @@ class Tuning : AppCompatActivity() {
                 }
             }
 
-            // Set position of button
+
+
             val params = FrameLayout.LayoutParams(buttonSize, buttonSize)
             params.leftMargin = (x - buttonSize / 2).toInt()
             params.topMargin = (y - buttonSize / 2).toInt()
@@ -285,9 +286,8 @@ class Tuning : AppCompatActivity() {
     }
 
 
-    // Function to scale up the currently selected button
     private fun applyScalingEffect(button: Button) {
-        stopScalingEffect() // Stop previous scaling effect before applying a new one
+        stopScalingEffect(button) // Stop previous effect before applying new one
 
         val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.2f, 1f).apply {
             duration = 1600
@@ -311,22 +311,27 @@ class Tuning : AppCompatActivity() {
 
 
 
-    // Function to highlight the next button in the sequence with a pulsing effect
+
     private fun highlightNextButton(buttonMap: Map<String, Button>, sequence: List<String>?, index: Int) {
         if (sequence != null && index < sequence.size) {
             val nextButtonText = sequence[index]
             val nextButton = buttonMap[nextButtonText]
 
             nextButton?.let { button ->
-                stopPulsingGlowEffect()
+                stopPulsingGlowEffect() // Stop pulsing on the previous button
 
+                // ✅ Set background BEFORE applying animation
                 button.setBackgroundResource(R.drawable.diamond_highlight)
 
+                // ✅ Now start the pulsing effect
                 applyPulsingGlowEffect(button)
+
                 pulsingButton = button // Track the currently pulsing button
             }
         }
     }
+
+
 
     // Function to apply a pulsing glow effect to the next button
     private fun applyPulsingGlowEffect(button: Button) {
@@ -349,39 +354,43 @@ class Tuning : AppCompatActivity() {
 
 
 
-    // Function to stop the scaling effect on the previous button
-    private fun stopScalingEffect() {
-        scalingButton?.let { button ->
-            (button.tag as? AnimatorSet)?.cancel()
-            button.tag = null
-            button.scaleX = 1f // Reset size
-            button.scaleY = 1f
-        }
+    private fun stopScalingEffect(button: Button) {
+        (button.tag as? AnimatorSet)?.cancel()
+        button.tag = null
+        button.scaleX = 1f // Reset size
+        button.scaleY = 1f
     }
 
-    // Function to stop the pulsing glow effect on the previously pulsing button
     private fun stopPulsingGlowEffect() {
         pulsingButton?.let { button ->
-            (button.tag as? AnimatorSet)?.cancel()
+            (button.tag as? AnimatorSet)?.cancel() // Stop animation
             button.tag = null
             button.alpha = 1f // Reset transparency
-            button.setBackgroundResource(R.drawable.diamond)
+
+            // Ensure we only reset the previous pulsing button, NOT the next button!
+            if (button != scalingButton) {
+                button.setTextColor(Color.LTGRAY)
+                button.setBackgroundResource(R.drawable.diamond) // Reset only if it's not the active one
+            }
         }
     }
 
-    // Function to reset all buttons and remove animations
+
+
+
     private fun resetButtons(buttonMap: Map<String, Button>) {
         for (button in buttonMap.values) {
-            button.setTextColor(Color.LTGRAY)
-            button.setBackgroundResource(R.drawable.diamond)
+            if (button != pulsingButton) { // ✅ Skip next button
+                button.setTextColor(Color.LTGRAY)
+                button.setBackgroundResource(R.drawable.diamond)
 
-            // Stop pulsing animation if exists
-            (button.tag as? AnimatorSet)?.cancel()
-            button.tag = null
+                // Stop pulsing animation if exists
+                (button.tag as? AnimatorSet)?.cancel()
+                button.tag = null
+            }
         }
-
-        pulsingButton = null
     }
+
 
     private fun starPattern(count: Int): MutableMap<String, List<String>> {
         val pattern = mutableMapOf<String, List<String>>()
