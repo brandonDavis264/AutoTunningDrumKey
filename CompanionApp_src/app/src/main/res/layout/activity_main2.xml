@@ -8,11 +8,12 @@
     android:background="@color/gray"
     tools:context=".`Drum Specs`">
 
+
     <TextView
         android:id="@+id/drumSpecs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="68dp"
+        android:layout_marginTop="48dp"
         android:fontFamily="@font/lilita_one_regular"
         android:text="Select your Device"
         android:textColor="@color/white"
@@ -21,12 +22,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="48dp"
         android:backgroundTint="@color/white"
         android:scrollbars="vertical"
         app:layout_constraintEnd_toEndOf="parent"
