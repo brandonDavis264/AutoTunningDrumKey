@@ -31,6 +31,8 @@
         app:layout_constraintTop_toBottomOf="@+id/noteSelect"
         tools:layout_editor_absoluteX="16dp" />
 
+
+
     <ImageView
         android:id="@+id/snareDrumImage"
         android:layout_width="290dp"
@@ -170,7 +172,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Switch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switch2"
         android:layout_width="127dp"
         android:layout_height="53dp"

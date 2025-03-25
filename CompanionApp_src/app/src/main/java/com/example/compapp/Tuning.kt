@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import java.io.IOException
 import kotlin.math.cos
 import kotlin.math.sin
@@ -93,6 +94,11 @@ class Tuning : AppCompatActivity() {
         })
 
         startListening()
+
+        val switch: SwitchCompat = findViewById(R.id.switch2)
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            isListening = isChecked
+        }
     }
 
     private fun updateBluetoothStatus() {
@@ -147,7 +153,7 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-    private fun startListening() {
+    private fun startListening()  {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
 
         if (bluetoothSocket == null || !bluetoothSocket.isConnected) {
