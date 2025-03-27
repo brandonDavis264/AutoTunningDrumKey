@@ -18,7 +18,7 @@ double* vReal;
 double* vImag;
 int bufferLen = 4096; //Sample Size
 //Desired frequency
-double targetFreak = 0;
+double targetFreak = 440;//0;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -89,13 +89,13 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  Serial.print("Target frequency: ");
-  Serial.println(targetFreak);
-  Serial.print("Reached Threshold:");
-  Serial.println(envelopeThreshold);
-  // Print envelope value for plotting (Serial Plotter compatible)
-  Serial.print("envelope:");
-  Serial.println(envelope);
+  // Serial.print("Target frequency: ");
+  // Serial.println(targetFreak);
+  // Serial.print("Reached Threshold: ");
+  // Serial.println(envelopeThreshold);
+  // // Print envelope value for plotting (Serial Plotter compatible)
+  // Serial.print("envelope:");
+  // Serial.println(envelope);
 }
 
 double recordAndCalculateAverage() {
@@ -156,12 +156,12 @@ void rotate(int angle) {
   int direction = (angle > 0) ? 135 : 45;
   
   // how much we want to turn scaled at a range from 0 to 1000
-  int turningFactor = map(abs(angle), 0, 360, 0, 1000);
+  int turningFactor = map(abs(angle), 0, 360, 20, 1000);
   
   servoFS5.write(direction);
   delay(turningFactor);
   servoFS5.write(90); // set to neutral or stop
-  delay(200);
+  delay(500);
 }
 
 void turnMotor(float freak, float targetFreak){
@@ -184,7 +184,7 @@ void turnMotor(float freak, float targetFreak){
 
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin("ESP32_SERVER");
+  SerialBT.begin("AutoTuningDrumKey");
   pinMode(BLUE_LED, OUTPUT);
   allocateBuffers(bufferLen);
   i2s_install();
@@ -193,21 +193,21 @@ void setup() {
   servoFS5.attach(PWM_PIN);
 }
 void loop() {
-  if (SerialBT.hasClient()) {
+  //if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
     double newTargetFreak = 0; // Declare outside the if block
 
-    if (SerialBT.available()) {
-      String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
-      newTargetFreak = receivedData.toDouble(); // Assign new value
+    // if (SerialBT.available()) {
+    //   String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
+    //   newTargetFreak = receivedData.toDouble(); // Assign new value
 
-      targetFreak = newTargetFreak; // Update targetFreak
-    }
+    //   targetFreak = newTargetFreak; // Update targetFreak
+    // }
     turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
-  }else {
-    digitalWrite(BLUE_LED, LOW);
-  }
+  // }else {
+  //   digitalWrite(BLUE_LED, LOW);
+  // }
 }
 
