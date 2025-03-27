@@ -12,9 +12,13 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import java.io.IOException
 import kotlin.math.cos
 import kotlin.math.sin
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.view.animation.LinearInterpolator
 
 class Tuning : AppCompatActivity() {
     private val radius = 250
@@ -90,6 +94,11 @@ class Tuning : AppCompatActivity() {
         })
 
         startListening()
+
+        val switch: SwitchCompat = findViewById(R.id.switch2)
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            isListening = isChecked
+        }
     }
 
     private fun updateBluetoothStatus() {
@@ -144,7 +153,7 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-    private fun startListening() {
+    private fun startListening()  {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
 
         if (bluetoothSocket == null || !bluetoothSocket.isConnected) {
@@ -184,10 +193,19 @@ class Tuning : AppCompatActivity() {
         listeningThread?.start()
     }
 
+    private var pulsingButton: Button? = null // Track currently pulsing button
+    private var scalingButton: Button? = null // Track currently scaling button
+
     private fun spawnButtons(frameLayout: FrameLayout, count: Int) {
         val centerX = frameLayout.width / 2
         val centerY = frameLayout.height / 2
         var selectedButton: Button? = null
+
+        val star = starPattern(count) // Map<String, List<String>>
+        val buttonMap = mutableMapOf<String, Button>() // Stores button text -> Button reference
+
+        var expectedSequence: List<String>? = null
+        var sequenceIndex = 0
 
         for (i in 0 until count) {
             val angle = i * 2 * Math.PI / count
@@ -195,26 +213,74 @@ class Tuning : AppCompatActivity() {
             val y = centerY + radius * sin(angle)
 
             val buttonSize = 70
+            val buttonText = "L ${i + 1}"
 
             val button = Button(this).apply {
-                text = "L ${i + 1}"
+                text = buttonText
                 setTextColor(Color.LTGRAY)
                 setBackgroundResource(R.drawable.diamond)
                 layoutParams = FrameLayout.LayoutParams(buttonSize, buttonSize)
             }
 
+            buttonMap[buttonText] = button // Store reference
+
             button.setOnClickListener {
-                selectedButton?.setTextColor(Color.LTGRAY)
-                selectedButton?.setBackgroundResource(R.drawable.diamond)
-                
-                if (selectedButton == button) {
-                    selectedButton = null
-                } else {
-                    button.setTextColor(Color.BLACK)
-                    button.setBackgroundResource(R.drawable.diamond_p)
-                    selectedButton = button
+                Log.d("DEBUG", "Button ${button.text} clicked")
+
+                runOnUiThread {
+                    if (expectedSequence == null) {
+                        if (star.containsKey(buttonText)) {
+                            expectedSequence = star[buttonText]
+                            sequenceIndex = 0
+                            Log.d("DEBUG", "Starting new sequence: $expectedSequence")
+                        } else {
+                            Log.d("DEBUG", "Invalid starting button: $buttonText")
+                            return@runOnUiThread
+                        }
+                    }
+
+                    if (sequenceIndex < expectedSequence!!.size) {
+                        val expectedText = expectedSequence!![sequenceIndex]
+
+                        if (buttonText == expectedText) {
+                            Log.d("DEBUG", "Correct press: $buttonText (Step: $sequenceIndex)")
+
+                            // Reset the previous button
+                            selectedButton?.let {
+                                stopPulsingGlowEffect()
+                                stopScalingEffect(it)
+                                it.setBackgroundResource(R.drawable.diamond)
+                            }
+
+                            // Apply "diamond_p" background and scaling to the **current** button
+                            button.setTextColor(Color.BLACK)
+                            button.setBackgroundResource(R.drawable.diamond_p)
+                            applyScalingEffect(button)
+
+                            // Update the selected button reference
+                            selectedButton = button
+
+                            sequenceIndex++ // Move to next button in sequence
+
+                            // Apply pulsing effect to the next button in the sequence
+                            if (sequenceIndex < expectedSequence!!.size) {
+                                highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
+                            } else {
+                                Log.d("DEBUG", "Sequence completed!")
+                                expectedSequence = null
+                                sequenceIndex = 0
+                            }
+                        } else {
+                            Log.d("DEBUG", "Incorrect press: $buttonText, expected: $expectedText")
+                            resetButtons(buttonMap)
+                            expectedSequence = null
+                            sequenceIndex = 0
+                        }
+                    }
                 }
             }
+
+
 
             val params = FrameLayout.LayoutParams(buttonSize, buttonSize)
             params.leftMargin = (x - buttonSize / 2).toInt()
@@ -225,19 +291,139 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-//    private fun starPattern(count: Int): MutableMap<String, List<String>> {
-//        val starPattern = mutableMapOf<String, List<String>>()
-//
-//        for (i in 0 until count) {
-//            val sequence = listOf<String>()
-//            for (j in i until count) {
-//
-//            }
-//            starPattern["L ${i + 1}"] =
-//        }
-//
-//        return starPattern
-//    }
+
+    private fun applyScalingEffect(button: Button) {
+        stopScalingEffect(button) // Stop previous effect before applying new one
+
+        val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.2f, 1f).apply {
+            duration = 1600
+            repeatMode = ObjectAnimator.REVERSE
+            repeatCount = ObjectAnimator.INFINITE
+        }
+
+        val scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.2f, 1f).apply {
+            duration = 1600
+            repeatMode = ObjectAnimator.REVERSE
+            repeatCount = ObjectAnimator.INFINITE
+        }
+
+        val animatorSet = AnimatorSet()
+        animatorSet.playTogether(scaleX, scaleY)
+        animatorSet.start()
+
+        button.tag = animatorSet // Store animation reference in the button
+        scalingButton = button
+    }
+
+
+
+
+    private fun highlightNextButton(buttonMap: Map<String, Button>, sequence: List<String>?, index: Int) {
+        if (sequence != null && index < sequence.size) {
+            val nextButtonText = sequence[index]
+            val nextButton = buttonMap[nextButtonText]
+
+            nextButton?.let { button ->
+                stopPulsingGlowEffect() // Stop pulsing on the previous button
+
+                // ✅ Set background BEFORE applying animation
+                button.setBackgroundResource(R.drawable.diamond_highlight)
+
+                // ✅ Now start the pulsing effect
+                applyPulsingGlowEffect(button)
+
+                pulsingButton = button // Track the currently pulsing button
+            }
+        }
+    }
+
+
+
+    // Function to apply a pulsing glow effect to the next button
+    private fun applyPulsingGlowEffect(button: Button) {
+        stopPulsingGlowEffect() // Stop pulsing effect on any previous button
+
+        val pulseAnimation = ObjectAnimator.ofFloat(button, "alpha", 0.3f, 1f).apply {
+            duration = 1600
+            repeatMode = ObjectAnimator.REVERSE
+            repeatCount = ObjectAnimator.INFINITE
+            interpolator = LinearInterpolator()
+        }
+
+        val animatorSet = AnimatorSet()
+        animatorSet.play(pulseAnimation)
+        animatorSet.start()
+
+        button.tag = animatorSet // Store animation reference in the button
+        pulsingButton = button
+    }
+
+
+
+    private fun stopScalingEffect(button: Button) {
+        (button.tag as? AnimatorSet)?.cancel()
+        button.tag = null
+        button.scaleX = 1f // Reset size
+        button.scaleY = 1f
+    }
+
+    private fun stopPulsingGlowEffect() {
+        pulsingButton?.let { button ->
+            (button.tag as? AnimatorSet)?.cancel() // Stop animation
+            button.tag = null
+            button.alpha = 1f // Reset transparency
+
+            // Ensure we only reset the previous pulsing button, NOT the next button!
+            if (button != scalingButton) {
+                button.setTextColor(Color.LTGRAY)
+                button.setBackgroundResource(R.drawable.diamond) // Reset only if it's not the active one
+            }
+        }
+    }
+
+
+
+
+    private fun resetButtons(buttonMap: Map<String, Button>) {
+        for (button in buttonMap.values) {
+            if (button != pulsingButton) { // ✅ Skip next button
+                button.setTextColor(Color.LTGRAY)
+                button.setBackgroundResource(R.drawable.diamond)
+
+                // Stop pulsing animation if exists
+                (button.tag as? AnimatorSet)?.cancel()
+                button.tag = null
+            }
+        }
+    }
+
+
+    private fun starPattern(count: Int): MutableMap<String, List<String>> {
+        val pattern = mutableMapOf<String, List<String>>()
+
+        for (i in 0 until count) {
+            val sequence = mutableListOf<String>()
+            var radial_j = i
+            for (j in 0 until count / 2) {
+                //if (j > 0) {
+                    if ((radial_j + 1) > count) {
+                        sequence.add("L ${(radial_j + 1) - count}")
+                    } else {
+                        sequence.add("L ${radial_j + 1}")
+                    }
+                //}
+
+                if ((radial_j + 1) + (count / 2) > count) {
+                    sequence.add("L ${((radial_j + 1) + (count / 2)) - count}")
+                } else {
+                    sequence.add("L ${(radial_j + 1) + (count / 2)}")
+                }
+                radial_j += 1
+            }
+            pattern["L ${i + 1}"] = sequence
+        }
+        return pattern
+    }
 
     override fun onDestroy() {
         super.onDestroy()
