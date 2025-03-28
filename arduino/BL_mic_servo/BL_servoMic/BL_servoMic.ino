@@ -18,7 +18,7 @@ double* vReal;
 double* vImag;
 int bufferLen = 4096; //Sample Size
 //Desired frequency
-double targetFreak = 440;//0;
+double targetFreak = 240;//0;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -31,7 +31,7 @@ int maxTurnAngle = 90; // limit on how much we can turn the motor at a time
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
-const float envelopeThreshold = 600.0f;  // Envelope threshold for calculation
+const float envelopeThreshold = 700.0f;  // Envelope threshold for calculation
 
 
 #pragma region i2s Set Up
@@ -89,13 +89,13 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  // Serial.print("Target frequency: ");
-  // Serial.println(targetFreak);
-  // Serial.print("Reached Threshold: ");
-  // Serial.println(envelopeThreshold);
-  // // Print envelope value for plotting (Serial Plotter compatible)
-  // Serial.print("envelope:");
-  // Serial.println(envelope);
+  Serial.print("Target frequency: ");
+  Serial.println(targetFreak);
+  Serial.print("Reached Threshold: ");
+  Serial.println(envelopeThreshold);
+  // Print envelope value for plotting (Serial Plotter compatible)
+  Serial.print("envelope:");
+  Serial.println(envelope);
 }
 
 double recordAndCalculateAverage() {
@@ -154,14 +154,14 @@ void rotate(int angle) {
   // < 90 = turns one direction at a given speed
   // > 90 = turns in the opposite direction at a given speed
   int direction = (angle > 0) ? 135 : 45;
-  
+
   // how much we want to turn scaled at a range from 0 to 1000
-  int turningFactor = map(abs(angle), 0, 360, 20, 1000);
+  int turningFactor = map(abs(angle), 0, 360, 100, 1000);
   
   servoFS5.write(direction);
   delay(turningFactor);
   servoFS5.write(90); // set to neutral or stop
-  delay(500);
+  delay(1000);
 }
 
 void turnMotor(float freak, float targetFreak){
@@ -169,15 +169,16 @@ void turnMotor(float freak, float targetFreak){
   int scale = 1;
   
   int angle = scale * error;
-  angle = constrain(angle, -maxTurnAngle, maxTurnAngle);
+  int constrain = constrain(angle, -90, 90);
   
   if (abs(angle) > 3) {
-      rotate(angle);
+      rotate(constrain);
       
       Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
-       + targetFreak + " | Error: " + error + " | Angle: " + angle);
+       + targetFreak + " | Error: " + error + " | Angle: " + constrain);
   } else{
       Serial.println("Adjustment too small - holding position");
+      servoFS5.write(90);
   }
 }
 #pragma endregion
@@ -193,21 +194,21 @@ void setup() {
   servoFS5.attach(PWM_PIN);
 }
 void loop() {
-  //if (SerialBT.hasClient()) {
+  if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
     double newTargetFreak = 0; // Declare outside the if block
 
-    // if (SerialBT.available()) {
-    //   String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
-    //   newTargetFreak = receivedData.toDouble(); // Assign new value
+    if (SerialBT.available()) {
+      String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
+      newTargetFreak = receivedData.toDouble(); // Assign new value
 
-    //   targetFreak = newTargetFreak; // Update targetFreak
-    // }
+      targetFreak = newTargetFreak; // Update targetFreak
+    }
     turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
-  // }else {
-  //   digitalWrite(BLUE_LED, LOW);
-  // }
+  }else {
+    digitalWrite(BLUE_LED, LOW);
+  }
 }
 
