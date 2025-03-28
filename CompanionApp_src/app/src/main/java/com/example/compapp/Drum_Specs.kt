@@ -92,6 +92,12 @@ class Drum_Specs : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            val selectedLug = lugCount.selectedItem.toString()
+            if (selectedLug == "Select") {
+                Toast.makeText(this, "Select a lug count", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             if (AppBluetoothManager.bluetoothAdapter?.isEnabled == true) {
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -103,6 +109,7 @@ class Drum_Specs : AppCompatActivity() {
                     connectToDevice(userDevice) { isConnected ->
                         if (isConnected) {
                             val intent = Intent(this, Tuning::class.java)
+
                             val extraLug: Int = lugCount.getSelectedItem().toString().toInt()
                             intent.putExtra("lugCount", extraLug)
                             startActivity(intent)

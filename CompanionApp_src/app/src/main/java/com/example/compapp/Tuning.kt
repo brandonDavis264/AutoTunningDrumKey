@@ -30,6 +30,7 @@ class Tuning : AppCompatActivity() {
     private var targetFrequency = 0.0f
     private var currNote = 0.0f
     private var selectedButton: Button? = null
+    private var switch: SwitchCompat? = null
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private val four_lugs = mutableListOf(45.0f, 135.0f, 225.0f, 315.0f)
     private val six_lugs = mutableListOf(60.0f, 120.0f, 180.0f, 240.0f, 300.0f, 360.0f)
@@ -112,8 +113,8 @@ class Tuning : AppCompatActivity() {
             }
         })
 
-        val switch: SwitchCompat = findViewById(R.id.switch2)
-        switch.setOnCheckedChangeListener { _, isChecked ->
+        switch = findViewById(R.id.switch2)
+        switch?.setOnCheckedChangeListener { _, isChecked ->
             isListening = isChecked
             if (isChecked) {
                 startListening()
@@ -185,21 +186,20 @@ class Tuning : AppCompatActivity() {
         val maxDiff = 50f
         val diff = kotlin.math.abs(curr - target)
 
-        return if (diff <= 10f) {
-            Color.rgb(0, 180, 0)
+        if (diff <= 10f) {
+            switch?.isChecked = false
+            Toast.makeText(this, "Target note reached!", Toast.LENGTH_SHORT).show()
+            return Color.rgb(0, 180, 0)
         } else {
-            // 🔥 Gradient from red to yellow (red → orange → yellow)
             val fraction = (diff - 10f) / (maxDiff - 10f)
                 .coerceIn(0f, 1f) // clamp between 0 and 1
 
             val red = 255
             val green = (255 * fraction).toInt()
 
-            Color.rgb(red, green, 0)
+            return Color.rgb(red, green, 0)
         }
     }
-
-
 
     private fun sendCommandToESP(command: String) {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
@@ -246,7 +246,11 @@ class Tuning : AppCompatActivity() {
                                 val formattedFrequency = String.format("%.2f", receivedData.toFloatOrNull() ?: 0f)
                                 Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
 
-                                currentNote.text = detectedNote
+                                if (switch?.isChecked == true) {
+                                    currentNote.text = detectedNote
+                                } else {
+                                    currentNote.text = "-"
+                                }
 
                                 selectedButton?.let {
                                     val color = calculateColor(currNote, targetFrequency)
@@ -307,6 +311,8 @@ class Tuning : AppCompatActivity() {
                     Toast.makeText(this@Tuning, "Select a target frequency", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
+
+                currNote = 3000.0f
 
                 val color = calculateColor(currNote, targetFrequency)
                 it.backgroundTintList = ColorStateList.valueOf(color)
