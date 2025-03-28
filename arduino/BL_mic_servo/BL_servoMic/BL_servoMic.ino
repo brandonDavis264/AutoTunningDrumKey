@@ -18,7 +18,7 @@ double* vReal;
 double* vImag;
 int bufferLen = 4096; //Sample Size
 //Desired frequency
-double targetFreak = 0;
+double targetFreak = 240;//0;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -26,13 +26,12 @@ ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 Servo servoFS5;
 int servPos = 0;
 const int stopPulse = 90;
-//Angle to turn the device[[=]]  
-int turnAngle = 90; 
+int maxTurnAngle = 90; // limit on how much we can turn the motor at a time
 
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
-const float envelopeThreshold = 600.0f;  // Envelope threshold for calculation
+const float envelopeThreshold = 700.0f;  // Envelope threshold for calculation
 
 
 #pragma region i2s Set Up
@@ -92,7 +91,7 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
 
   Serial.print("Target frequency: ");
   Serial.println(targetFreak);
-  Serial.print("Reached Threshold:");
+  Serial.print("Reached Threshold: ");
   Serial.println(envelopeThreshold);
   // Print envelope value for plotting (Serial Plotter compatible)
   Serial.print("envelope:");
@@ -149,44 +148,44 @@ double recordAndCalculateAverage() {
 #pragma endregion
 
 #pragma region Motor Functionality 
-void rotateAngle(int angle, int speed) {
-  int movementSpeed = constrain(speed, 0, 90); // Ensure speed stays in valid range
-  int direction = (angle > 0) ? stopPulse + movementSpeed : stopPulse - movementSpeed;
+void rotate(int angle) {
+  // motor controls:
+  //   90 = neutral (no motion)
+  // < 90 = turns one direction at a given speed
+  // > 90 = turns in the opposite direction at a given speed
+  int direction = (angle > 0) ? 135 : 45;
 
-  int duration = map(abs(angle), 0, 360, 0, 1000); // Approximate time for rotation
-
+  // how much we want to turn scaled at a range from 0 to 1000
+  int turningFactor = map(abs(angle), 0, 360, 100, 1000);
+  
   servoFS5.write(direction);
-  delay(duration);
-  servoFS5.write(stopPulse); // Stop
-  delay(200);
+  delay(turningFactor);
+  servoFS5.write(90); // set to neutral or stop
+  delay(1000);
 }
 
-void turnMotor(float freak, float targetFreak, int turnAngle){
-  int servoPos = 0;
-
-  // Adjust servo position smoothly
-  if (freak < targetFreak-10) {
-    
-    servoPos = turnAngle;  // Decrease position (tighten)
-    Serial.println("Tightening...");
-  } 
-  else if (freak > targetFreak+10) {
-    servoPos = -turnAngle;  // Increase position (loosen)
-    Serial.println("Loosening...");
-  } 
-  else {
-    Serial.println("Holding position...");
+void turnMotor(float freak, float targetFreak){
+  int error = targetFreak - freak;
+  int scale = 1;
+  
+  int angle = scale * error;
+  int constrain = constrain(angle, -90, 90);
+  
+  if (abs(angle) > 3) {
+      rotate(constrain);
+      
+      Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
+       + targetFreak + " | Error: " + error + " | Angle: " + constrain);
+  } else{
+      Serial.println("Adjustment too small - holding position");
+      servoFS5.write(90);
   }
-
-  rotateAngle(servoPos, 90);
-  Serial.print("Servo Position: ");
-  Serial.println(servoPos);
 }
 #pragma endregion
 
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin("ESP32_SERVER");
+  SerialBT.begin("AutoTuningDrumKey");
   pinMode(BLUE_LED, OUTPUT);
   allocateBuffers(bufferLen);
   i2s_install();
@@ -206,7 +205,7 @@ void loop() {
 
       targetFreak = newTargetFreak; // Update targetFreak
     }
-    turnMotor(freak, targetFreak, turnAngle);
+    turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
   }else {
     digitalWrite(BLUE_LED, LOW);
