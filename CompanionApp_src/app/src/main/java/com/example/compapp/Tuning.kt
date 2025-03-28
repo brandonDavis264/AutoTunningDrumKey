@@ -18,15 +18,24 @@ import kotlin.math.cos
 import kotlin.math.sin
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.content.res.ColorStateList
 import android.view.animation.LinearInterpolator
 
 class Tuning : AppCompatActivity() {
     private val radius = 250
-    private var currentRotation = 0f
     private var listeningThread: Thread? = null
     private var isListening = false
     private lateinit var bottomActionBar: TextView
+    private lateinit var drum: ImageView
+    private var targetFrequency = 0.0f
+    private var currNote = 0.0f
+    private var selectedButton: Button? = null
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+    private val four_lugs = mutableListOf(45.0f, 135.0f, 225.0f, 315.0f)
+    private val six_lugs = mutableListOf(60.0f, 120.0f, 180.0f, 240.0f, 300.0f, 360.0f)
+    private val eight_lugs = mutableListOf(67.5f, 112.5f, 157.5f, 202.5f, 247.5f, 292.5f, 337.5f, 382.5f)
+    private val ten_lugs = mutableListOf(72.0f, 108.0f, 144.0f, 180.0f, 216.0f, 252.0f, 288.0f, 324.0f, 360.0f, 36.0f)
+    private val twelve_lugs = mutableListOf(75.0f, 105.0f, 135.0f, 165.0f, 195.0f, 225.0f, 255.0f, 285.0f, 315.0f, 345.0f, 375.0f, 405.0f)
 
     private val bluetoothStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -41,7 +50,6 @@ class Tuning : AppCompatActivity() {
                     BluetoothAdapter.STATE_ON -> "$deviceName: $deviceAddress [Connected]"
                     else -> "$deviceName: $deviceAddress [Unknown State]"
                 }
-
 
                 runOnUiThread {
                     bottomActionBar.text = connectivityStatus
@@ -68,18 +76,19 @@ class Tuning : AppCompatActivity() {
         val noteTuneOptions = listOf("Select", "B3", "D#4")
         val targetNote: TextView = findViewById(R.id.TargetNote)
 
+        drum = findViewById(R.id.snare_default)
+
         val adapter2 = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, noteTuneOptions)
         noteTuneTo.adapter = adapter2
 
         noteTuneTo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedNote = noteTuneOptions[position]
-                //val targetFrequency = getDrumFrequency(selectedNote)
+                targetFrequency = getDrumFrequency(selectedNote)
                 //sendCommandToESP(targetFrequency.toString())
                 targetNote.text = selectedNote
                 sendCommandToESP(selectedNote)
             }
-
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
@@ -89,16 +98,51 @@ class Tuning : AppCompatActivity() {
             ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 frameLayout.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                spawnButtons(frameLayout, lugCount)
+                if (lugCount == 4) {
+                    spawnButtons(frameLayout, lugCount, four_lugs)
+                } else if (lugCount == 6) {
+                    spawnButtons(frameLayout, lugCount, six_lugs)
+                } else if (lugCount == 8) {
+                    spawnButtons(frameLayout, lugCount, eight_lugs)
+                } else if (lugCount == 10) {
+                    spawnButtons(frameLayout, lugCount, ten_lugs)
+                } else if (lugCount == 12) {
+                    spawnButtons(frameLayout, lugCount, twelve_lugs)
+                }
             }
         })
-
-        startListening()
 
         val switch: SwitchCompat = findViewById(R.id.switch2)
         switch.setOnCheckedChangeListener { _, isChecked ->
             isListening = isChecked
+            if (isChecked) {
+                startListening()
+            } else {
+                stopListening()
+            }
         }
+
+        val backbutton = findViewById<Button>(R.id.back)
+        backbutton.setOnClickListener {
+            val socket = AppBluetoothManager.bluetoothSocket
+            try {
+                socket?.apply {
+                    if (isConnected) {
+                        close()
+                        AppBluetoothManager.bluetoothSocket = null
+                        Toast.makeText(this@Tuning, "Disconnected", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Toast.makeText(this@Tuning, "Error disconnecting", Toast.LENGTH_SHORT).show()
+            }
+
+            val intent = Intent(this@Tuning, Drum_Specs::class.java)
+            startActivity(intent)
+            finish() // remove Tuning activity from back stack
+        }
+
     }
 
     private fun updateBluetoothStatus() {
@@ -116,6 +160,7 @@ class Tuning : AppCompatActivity() {
 
     private fun getDrumFrequency(note: String): Float {
         return when (note) {
+            "Select" -> 0.0f
             "B3" -> 250.00f
             "D#4" -> 311.13f
             else -> 0.0f
@@ -135,6 +180,26 @@ class Tuning : AppCompatActivity() {
 
         return noteMap.minByOrNull { (_, frequency) -> kotlin.math.abs(frequency - note) }?.key ?: "N/A"
     }
+
+    private fun calculateColor(curr: Float, target: Float): Int {
+        val maxDiff = 50f
+        val diff = kotlin.math.abs(curr - target)
+
+        return if (diff <= 10f) {
+            Color.rgb(0, 180, 0)
+        } else {
+            // 🔥 Gradient from red to yellow (red → orange → yellow)
+            val fraction = (diff - 10f) / (maxDiff - 10f)
+                .coerceIn(0f, 1f) // clamp between 0 and 1
+
+            val red = 255
+            val green = (255 * fraction).toInt()
+
+            Color.rgb(red, green, 0)
+        }
+    }
+
+
 
     private fun sendCommandToESP(command: String) {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
@@ -176,11 +241,17 @@ class Tuning : AppCompatActivity() {
 
                         if (frequency > 97.99) {
                             val detectedNote = freqToNote(receivedData.toFloat())
+                            currNote = receivedData.toFloat()
                             runOnUiThread {
                                 val formattedFrequency = String.format("%.2f", receivedData.toFloatOrNull() ?: 0f)
                                 Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
 
                                 currentNote.text = detectedNote
+
+                                selectedButton?.let {
+                                    val color = calculateColor(currNote, targetFrequency)
+                                    it.backgroundTintList = ColorStateList.valueOf(color)
+                                }
                             }
                         }
                     }
@@ -193,13 +264,19 @@ class Tuning : AppCompatActivity() {
         listeningThread?.start()
     }
 
-    private var pulsingButton: Button? = null // Track currently pulsing button
-    private var scalingButton: Button? = null // Track currently scaling button
+    private fun stopListening() {
+        isListening = false
+        listeningThread?.interrupt()
+        listeningThread = null
+    }
 
-    private fun spawnButtons(frameLayout: FrameLayout, count: Int) {
+    private var pulsingButton: Button? = null // Track currently pulsing button
+//    private var scalingButton: Button? = null // Track currently scaling button
+
+    private fun spawnButtons(frameLayout: FrameLayout, count: Int, pos: MutableList<Float>) {
         val centerX = frameLayout.width / 2
         val centerY = frameLayout.height / 2
-        var selectedButton: Button? = null
+        //var selectedButton: Button? = null
 
         val star = starPattern(count) // Map<String, List<String>>
         val buttonMap = mutableMapOf<String, Button>() // Stores button text -> Button reference
@@ -217,7 +294,7 @@ class Tuning : AppCompatActivity() {
 
             val button = Button(this).apply {
                 text = buttonText
-                setTextColor(Color.LTGRAY)
+                setTextColor(Color.WHITE)
                 setBackgroundResource(R.drawable.diamond)
                 layoutParams = FrameLayout.LayoutParams(buttonSize, buttonSize)
             }
@@ -226,6 +303,15 @@ class Tuning : AppCompatActivity() {
 
             button.setOnClickListener {
                 Log.d("DEBUG", "Button ${button.text} clicked")
+                if (targetFrequency == 0.0f) {
+                    Toast.makeText(this@Tuning, "Select a target frequency", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val color = calculateColor(currNote, targetFrequency)
+                it.backgroundTintList = ColorStateList.valueOf(color)
+
+                button.setBackgroundResource(R.drawable.r_back)
 
                 runOnUiThread {
                     if (expectedSequence == null) {
@@ -248,17 +334,45 @@ class Tuning : AppCompatActivity() {
                             // Reset the previous button
                             selectedButton?.let {
                                 stopPulsingGlowEffect()
-                                stopScalingEffect(it)
-                                it.setBackgroundResource(R.drawable.diamond)
+//                                stopScalingEffect(it)
+//                                it.setBackgroundResource(R.drawable.diamond)
                             }
 
                             // Apply "diamond_p" background and scaling to the **current** button
-                            button.setTextColor(Color.BLACK)
-                            button.setBackgroundResource(R.drawable.diamond_p)
-                            applyScalingEffect(button)
+//                            button.setTextColor(Color.BLACK)
+//                            button.setBackgroundResource(R.drawable.diamond_p)
+//                            applyScalingEffect(button)
 
                             // Update the selected button reference
                             selectedButton = button
+
+                            var lugtext = selectedButton?.text
+                            var lugnum = lugtext?.get(2)
+
+                            if (count == 4) {
+                                drum.setImageResource(R.drawable.snare_quarter)
+                            } else if (count == 6) {
+                                drum.setImageResource(R.drawable.snare_sixth)
+                            } else if (count == 8) {
+                                drum.setImageResource(R.drawable.snare_eigth)
+                            } else if (count == 10) {
+                                drum.setImageResource(R.drawable.snare_tenth)
+                            } else if (count == 12) {
+                                drum.setImageResource(R.drawable.snare_twelth)
+                            }
+                            if (lugnum != null) {
+                                if (lugtext?.length!! == 4) {
+                                    if ((lugtext?.get(3))?.digitToInt() == 0) {
+                                        drum.rotation = pos[9]
+                                    } else if ((lugtext?.get(3))?.digitToInt() == 1) {
+                                        drum.rotation = pos[10]
+                                    } else if ((lugtext?.get(3))?.digitToInt() == 2) {
+                                        drum.rotation = pos[11]
+                                    }
+                                } else {
+                                    drum.rotation = pos[lugnum.digitToInt() - 1]
+                                }
+                            }
 
                             sequenceIndex++ // Move to next button in sequence
 
@@ -280,8 +394,6 @@ class Tuning : AppCompatActivity() {
                 }
             }
 
-
-
             val params = FrameLayout.LayoutParams(buttonSize, buttonSize)
             params.leftMargin = (x - buttonSize / 2).toInt()
             params.topMargin = (y - buttonSize / 2).toInt()
@@ -292,31 +404,28 @@ class Tuning : AppCompatActivity() {
     }
 
 
-    private fun applyScalingEffect(button: Button) {
-        stopScalingEffect(button) // Stop previous effect before applying new one
-
-        val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.2f, 1f).apply {
-            duration = 1600
-            repeatMode = ObjectAnimator.REVERSE
-            repeatCount = ObjectAnimator.INFINITE
-        }
-
-        val scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.2f, 1f).apply {
-            duration = 1600
-            repeatMode = ObjectAnimator.REVERSE
-            repeatCount = ObjectAnimator.INFINITE
-        }
-
-        val animatorSet = AnimatorSet()
-        animatorSet.playTogether(scaleX, scaleY)
-        animatorSet.start()
-
-        button.tag = animatorSet // Store animation reference in the button
-        scalingButton = button
-    }
-
-
-
+//    private fun applyScalingEffect(button: Button) {
+//        stopScalingEffect(button) // Stop previous effect before applying new one
+//
+//        val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.2f, 1f).apply {
+//            duration = 1600
+//            repeatMode = ObjectAnimator.REVERSE
+//            repeatCount = ObjectAnimator.INFINITE
+//        }
+//
+//        val scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.2f, 1f).apply {
+//            duration = 1600
+//            repeatMode = ObjectAnimator.REVERSE
+//            repeatCount = ObjectAnimator.INFINITE
+//        }
+//
+//        val animatorSet = AnimatorSet()
+//        animatorSet.playTogether(scaleX, scaleY)
+//        animatorSet.start()
+//
+//        button.tag = animatorSet // Store animation reference in the button
+//        scalingButton = button
+//    }
 
     private fun highlightNextButton(buttonMap: Map<String, Button>, sequence: List<String>?, index: Int) {
         if (sequence != null && index < sequence.size) {
@@ -326,18 +435,14 @@ class Tuning : AppCompatActivity() {
             nextButton?.let { button ->
                 stopPulsingGlowEffect() // Stop pulsing on the previous button
 
-                // ✅ Set background BEFORE applying animation
                 button.setBackgroundResource(R.drawable.diamond_highlight)
 
-                // ✅ Now start the pulsing effect
                 applyPulsingGlowEffect(button)
 
                 pulsingButton = button // Track the currently pulsing button
             }
         }
     }
-
-
 
     // Function to apply a pulsing glow effect to the next button
     private fun applyPulsingGlowEffect(button: Button) {
@@ -358,8 +463,6 @@ class Tuning : AppCompatActivity() {
         pulsingButton = button
     }
 
-
-
     private fun stopScalingEffect(button: Button) {
         (button.tag as? AnimatorSet)?.cancel()
         button.tag = null
@@ -374,19 +477,16 @@ class Tuning : AppCompatActivity() {
             button.alpha = 1f // Reset transparency
 
             // Ensure we only reset the previous pulsing button, NOT the next button!
-            if (button != scalingButton) {
-                button.setTextColor(Color.LTGRAY)
-                button.setBackgroundResource(R.drawable.diamond) // Reset only if it's not the active one
-            }
+//            if (button != scalingButton) {
+//                button.setTextColor(Color.LTGRAY)
+//                button.setBackgroundResource(R.drawable.diamond) // Reset only if it's not the active one
+//            }
         }
     }
 
-
-
-
     private fun resetButtons(buttonMap: Map<String, Button>) {
         for (button in buttonMap.values) {
-            if (button != pulsingButton) { // ✅ Skip next button
+            if (button != pulsingButton) {
                 button.setTextColor(Color.LTGRAY)
                 button.setBackgroundResource(R.drawable.diamond)
 
@@ -397,7 +497,6 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-
     private fun starPattern(count: Int): MutableMap<String, List<String>> {
         val pattern = mutableMapOf<String, List<String>>()
 
@@ -405,14 +504,11 @@ class Tuning : AppCompatActivity() {
             val sequence = mutableListOf<String>()
             var radial_j = i
             for (j in 0 until count / 2) {
-                //if (j > 0) {
-                    if ((radial_j + 1) > count) {
-                        sequence.add("L ${(radial_j + 1) - count}")
-                    } else {
-                        sequence.add("L ${radial_j + 1}")
-                    }
-                //}
-
+                if ((radial_j + 1) > count) {
+                    sequence.add("L ${(radial_j + 1) - count}")
+                } else {
+                    sequence.add("L ${radial_j + 1}")
+                }
                 if ((radial_j + 1) + (count / 2) > count) {
                     sequence.add("L ${((radial_j + 1) + (count / 2)) - count}")
                 } else {
@@ -424,6 +520,29 @@ class Tuning : AppCompatActivity() {
         }
         return pattern
     }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+
+        val socket = AppBluetoothManager.bluetoothSocket
+        try {
+            socket?.apply {
+                if (isConnected) {
+                    close()
+                    AppBluetoothManager.bluetoothSocket = null
+                    Toast.makeText(this@Tuning, "Disconnected", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(this@Tuning, "Error disconnecting", Toast.LENGTH_SHORT).show()
+        }
+
+        val intent = Intent(this@Tuning, Drum_Specs::class.java)
+        startActivity(intent)
+        finish()
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()

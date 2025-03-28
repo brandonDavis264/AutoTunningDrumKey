@@ -14,23 +14,10 @@
     tools:context=".`Drum Specs`">
 
     <TextView
-        android:id="@+id/drumSpecs"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:fontFamily="@font/lilita_one_regular"
-        android:text="Drum Specs"
-        android:textColor="@color/white"
-        android:textSize="32sp"
-    app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
         android:id="@+id/deviceSelect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="132dp"
+        android:layout_marginTop="92dp"
         android:fontFamily="@font/lilita_one_regular"
         android:text="Select your Device"
         android:textColor="@color/white"
