@@ -18,7 +18,7 @@ double* vReal;
 double* vImag;
 int bufferLen = 4096; //Sample Size
 //Desired frequency
-double targetFreak = 240;//0;
+double targetFreak = 250;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -89,13 +89,13 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  Serial.print("Target frequency: ");
-  Serial.println(targetFreak);
-  Serial.print("Reached Threshold: ");
-  Serial.println(envelopeThreshold);
-  // Print envelope value for plotting (Serial Plotter compatible)
-  Serial.print("envelope:");
-  Serial.println(envelope);
+  // Serial.print("Target frequency: ");
+  // Serial.println(targetFreak);
+  // Serial.print("Reached Threshold: ");
+  // Serial.println(envelopeThreshold: );
+  // // Print envelope value for plotting (Serial Plotter compatible)
+  // Serial.print("envelope:");
+  // Serial.println(envelope);
 }
 
 double recordAndCalculateAverage() {
@@ -197,13 +197,13 @@ void loop() {
   if (SerialBT.hasClient()) {
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
-    double newTargetFreak = 0; // Declare outside the if block
+    //double newTargetFreak = 0; // Declare outside the if block
 
     if (SerialBT.available()) {
       String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
-      newTargetFreak = receivedData.toDouble(); // Assign new value
+      //newTargetFreak = receivedData.toDouble(); // Assign new value
 
-      targetFreak = newTargetFreak; // Update targetFreak
+      //targetFreak = newTargetFreak; // Update targetFreak
     }
     turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
