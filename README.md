@@ -1,51 +1,37 @@
 # AutoTunningDrum
-Milestone Overview
-This milestone demonstrates the initial integration of hardware and software components for the audio frequency analyzer project. It includes functional implementations of key systems, focusing on the connection between the ESP32 microcontroller and the Android application via Bluetooth.
+Milestone Overview - Release candidate
+This milestone represents a build with all features complete, with minor bugs. It shows an almost finilized, working product.
 
 Work Completed in This Milestone
 
 Hardware Development:
-I2S Microphone Integration:
-Configured the ESP32 to read audio input from the I2S microphone.
-Established a sample rate for audio acquisition.
-FFT Implementation:
-Developed FFT processing using the ArduinoFFT library.
-Bluetooth Communication:
-Enabled ESP32 Bluetooth to send frequency data to the Android app.
-LED Feedback:
-Added LED indicator to show active Bluetooth connections.
+  PID loop
+  Mic proper functioning
+  Soldering of all parts into one
+  Peak detection
+  Encasing
+  Drill bit to connect to the lug and be able to twist it.
 
 Android Application Development:
-Designed and implemented an intuitive user interface with dropdown menus for drum configuration and a record button for initiating analysis.
-Added Bluetooth connectivity to communicate with the ESP32 using hardcoded device addresses.
-Implemented permission handling for modern Android versions.
-Configured navigation between the main screen and subsequent activities.
-
-Integration and Communication:
-Established reliable two-way communication between the ESP32 and Android application using Bluetooth.
-ESP32 successfully receives commands and sends processed frequency data back to the Android app.
+  Button gradients for note accuracy from red to green.
+  Device management for bluetooth connectivity.
+  Spinner drum image for user UX/UI with a slice highlighted.
+  Current note box showing detected note.
+  Variable lug count.
+  Drop down menu that selects target note. (only for the beta build version and production release)
+  Open mic button - Turns on the mic -.
+  Frequency shows on the bottom of the screen.
+  
 
 Known Bugs and Issues
+
 Hardware Bugs:
-FFT Accuracy:
-Occasional noise in audio data results in inaccurate frequency peaks.
-Memory Constraints:
-Buffer allocation for large FFT sizes can fail for longer recordings, must stick to a short period of time.
+  Actual tuning of the drum faces issues with overtones and natural errors when struck at different pressures.
 
 Software Bugs:
-Hardcoded Bluetooth Address:
-The Android app only connects to a predefined ESP32 device address, limiting flexibility for multiple devices.
-Peak detection:
-Cant properly detect peak
-Issues in noisy environment where the mic would be triggered for other noise that is not the drum.
-UI/UX Issues:
-Dropdown options are not dynamically linked to functionality.
-After drum specifications, the socket connection to the ESP fails at times yet the page still goes to the recording page which it shouldn't do since recording will be
-impossible without an active connection.
+  This build for the app does not have the ability to send data to the ESP; however, the code for it is in the Beta build and can easily be ported over for Production release
 
 Future Plans
-Possibly use a directional mic to avoid undesired noise or apply filters
-Implement a dynamic Bluetooth device discovery feature.
-Add filtering mechanisms for audio input to enhance FFT accuracy.
-
-Refine user interface for better real-time feedback and error handling.
+  Finilize encasing for the hardware to better fit the device and avoid the motor from slipping. Mic, power switch, charge port holes positioning.
+  Include tutorial/walkthrough on welcome page.
+  Testing of the device and app with the drum.
