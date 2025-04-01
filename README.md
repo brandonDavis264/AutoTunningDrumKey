@@ -8,7 +8,7 @@ This milestone represents a build with all features complete, with minor bugs. I
 Work Completed in This Milestone
 
 Project Work Space:
-ESP32_Src:
+- ESP32_Src:
   - Test Files:
       - Peripherals 
           - Microphone I2S Communication
@@ -17,11 +17,10 @@ ESP32_Src:
       - Algorithms
           - Fast Fourier Transform (FFT)
   - ESP32 Project Firmware
-Software_Src:
- - Bluetooth Communication
-      - Classic Bluetooth test 
-         for writing/reading data 
-         from the ESP32
+      - ESP32 Code for Project
+- Software_Src:
+  - Bluetooth Communication
+      - Classic Bluetooth test for writing/reading data from the ESP32
   - Companion App Src
       - App Code for Project
 
