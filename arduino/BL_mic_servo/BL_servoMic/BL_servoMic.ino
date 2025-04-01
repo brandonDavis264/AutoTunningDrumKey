@@ -18,7 +18,7 @@ double* vReal;
 double* vImag;
 int bufferLen = 4096; //Sample Size
 //Desired frequency
-double targetFreak = 240;//0;
+double targetFreak = 0;//240;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
 
@@ -31,7 +31,7 @@ int maxTurnAngle = 90; // limit on how much we can turn the motor at a time
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
-const float envelopeThreshold = 700.0f;  // Envelope threshold for calculation
+const float envelopeThreshold = 400.0f;  // Envelope threshold for calculation
 
 
 #pragma region i2s Set Up

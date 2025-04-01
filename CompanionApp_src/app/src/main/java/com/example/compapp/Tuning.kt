@@ -27,6 +27,7 @@ class Tuning : AppCompatActivity() {
     private var isListening = false
     private lateinit var bottomActionBar: TextView
     private lateinit var drum: ImageView
+    private var targetHit = false
     private var targetFrequency = 0.0f
     private var currNote = 0.0f
     private var selectedButton: Button? = null
@@ -187,6 +188,7 @@ class Tuning : AppCompatActivity() {
         val diff = kotlin.math.abs(curr - target)
 
         if (diff <= 10f) {
+            targetHit = true
             switch?.isChecked = false
             Toast.makeText(this, "Target note reached!", Toast.LENGTH_SHORT).show()
             return Color.rgb(0, 180, 0)
@@ -383,6 +385,9 @@ class Tuning : AppCompatActivity() {
                             sequenceIndex++ // Move to next button in sequence
 
                             // Apply pulsing effect to the next button in the sequence
+//                            if (targetHit) {
+//                                highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
+//                            }
                             if (sequenceIndex < expectedSequence!!.size) {
                                 highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
                             } else {
