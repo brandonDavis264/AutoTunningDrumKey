@@ -23,15 +23,15 @@ This milestone represents a build with all features complete, with minor bugs. I
       - App Code for Project
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
-Hardware Development:
-  - PID loop
+# Hardware Development:
+  - Linear Controller loop
   - Mic proper functioning
   - Soldering of all parts into one
   - Peak detection
   - Encasing
   - Drill bit to connect to the lug and be able to twist it.
 
-Android Application Development:
+# Android Application Development:
   - Button gradients for note accuracy from red to green.
   - Device management for bluetooth connectivity.
   - Spinner drum image for user UX/UI with a slice highlighted.
@@ -42,7 +42,7 @@ Android Application Development:
   - Frequency shows on the bottom of the screen.
   
 --------------------------------------------------------------------------------------------------------------------------------------------------------
-Known Bugs and Issues
+# Known Bugs and Issues
 
 Hardware Bugs:
   - Actual tuning of the drum faces issues with overtones and natural errors when struck at different pressures.
