@@ -49,8 +49,8 @@ Hardware Bugs:
 
 Software Bugs:
   - This build for the app does not have the ability to send data to the ESP; however, the code for it is in the Beta build and can easily be ported over for Production release
-
-Future Plans
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Future Plans
   - Finilize encasing for the hardware to better fit the device and avoid the motor from slipping. Mic, power switch, charge port holes positioning.
   - Include tutorial/walkthrough on welcome page.
   - Testing of the device and app with the drum.
