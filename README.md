@@ -21,7 +21,7 @@ Project Work Space:
       - Classic Bluetooth test for writing/reading data from the ESP32
   - Companion App Src
       - App Code for Project
-
+-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 Hardware Development:
   - PID loop
