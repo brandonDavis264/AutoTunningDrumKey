@@ -8,8 +8,8 @@ This milestone represents a build with all features complete, with minor bugs. I
 Work Completed in This Milestone
 
 Project Work Space:
-ESP32_Src
-  Test Files:
+ESP32_Src:
+  - Test Files:
       - Peripherals 
           - Microphone I2S Communication
           - Classic Bluetooth Communication
