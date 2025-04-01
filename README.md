@@ -7,6 +7,25 @@ This milestone represents a build with all features complete, with minor bugs. I
 
 Work Completed in This Milestone
 
+Project Work Space:
+ESP32_Src
+  -> Test Files:
+      -> Peripherals 
+          -> Microphone I2S Communication
+          -> Classic Bluetooth Communication
+          -> Servo Moror Pulse With Modulation
+      -> Algorithms
+          -> Fast Fourier Transform (FFT)
+  -> ESP32 Project Firmware
+Software_Src:
+  -> Bluetooth Communication
+      -> Classic Bluetooth test 
+         for writing/reading data 
+         from the ESP32
+  -> Companion App Src
+      -> App Code for Project
+
+
 Hardware Development:
   PID loop
   Mic proper functioning
