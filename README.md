@@ -41,7 +41,7 @@ Android Application Development:
   - Open mic button - Turns on the mic -.
   - Frequency shows on the bottom of the screen.
   
-
+--------------------------------------------------------------------------------------------------------------------------------------------------------
 Known Bugs and Issues
 
 Hardware Bugs:
