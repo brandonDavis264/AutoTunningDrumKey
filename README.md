@@ -20,10 +20,8 @@ Project Work Space:
   - ESP32 Project Firmware
  
 - Software_Src:
- - Bluetooth Communication
-      - Classic Bluetooth test 
-         for writing/reading data 
-         from the ESP32
+  - Bluetooth Communication
+      - Classic Bluetooth test for writing/reading data from the ESP32
   - Companion App Src
       - App Code for Project
 
