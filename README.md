@@ -3,8 +3,8 @@ Milestone Overview - Release candidate
 
 # SEE "Design.pdf" FOR INTERNAL, EXTERNAL, AND PERSISTENT STATE DESIGNS
 
-# This milestone represents a build with all features complete, with minor bugs. It shows an almost finilized, working product.
-----------------------------------------------------------------------------------------------------------------------------------------------------------
+This milestone represents a build with all features complete, with minor bugs. It shows an almost finilized, working product.
+
 # Project Work Space:
 - ESP32_Src:
   - Test Files:
