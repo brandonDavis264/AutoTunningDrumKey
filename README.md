@@ -17,6 +17,7 @@ Project Work Space:
       - Algorithms
           - Fast Fourier Transform (FFT)
   - ESP32 Project Firmware
+      - ESP32 Code for Project
 - Software_Src:
   - Bluetooth Communication
       - Classic Bluetooth test for writing/reading data from the ESP32
