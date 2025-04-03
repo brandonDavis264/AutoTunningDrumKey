@@ -87,9 +87,7 @@ class Tuning : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedNote = noteTuneOptions[position]
                 targetFrequency = getDrumFrequency(selectedNote)
-                //sendCommandToESP(targetFrequency.toString())
-                targetNote.text = selectedNote
-                sendCommandToESP(selectedNote)
+                sendCommandToESP(targetFrequency.toString())
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
