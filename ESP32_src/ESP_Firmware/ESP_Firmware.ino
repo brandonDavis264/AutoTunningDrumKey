@@ -200,10 +200,12 @@ void loop() {
     //double newTargetFreak = 0; // Declare outside the if block
 
     if (SerialBT.available()) {
-      String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
-      //newTargetFreak = receivedData.toDouble(); // Assign new value
-      //targetFreak = newTargetFreak; // Update targetFreak
+      String receivedData = SerialBT.readStringUntil('\n');
+      targetFreak = receivedData.toDouble();
+      Serial.print("New target frequency received: ");
+      Serial.println(targetFreak);
     }
+
     turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
   }else {
