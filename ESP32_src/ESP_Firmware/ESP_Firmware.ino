@@ -21,6 +21,7 @@ int bufferLen = 4096; //Sample Size
 double targetFreak = 0;
 // FFT Object
 ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
+char micCheck = '0';
 
 // Servo Proccessing Variables 
 Servo servoFS5;
@@ -195,6 +196,12 @@ void setup() {
 }
 void loop() {
   if (SerialBT.hasClient()) {
+    while (micCheck == '0') { 
+      if (SerialBT.available()) {
+        String receivedData = SerialBT.readStringUntil('\n');
+        micCheck = recievedData[0];
+      }
+    }
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
     //double newTargetFreak = 0; // Declare outside the if block
