@@ -18,8 +18,71 @@ import kotlin.math.cos
 import kotlin.math.sin
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.content.DialogInterface
 import android.content.res.ColorStateList
 import android.view.animation.LinearInterpolator
+import androidx.appcompat.app.AlertDialog
+
+
+//https://stackoverflow.com/questions/70757388/alertdialog-in-android-studio-kotlin-not-displaying
+private fun tutorialDialog1(context: Context) {
+    val tutorial = AlertDialog.Builder(context)
+    tutorial.apply {
+        setTitle("Is this your first time using this application?")
+        setPositiveButton("Yes") { _: DialogInterface?, _: Int ->
+            tutorialDialog2(context)
+        }
+        setNegativeButton("No") { _: DialogInterface?, _: Int ->
+
+        }
+    }.create().show()
+}
+
+private fun tutorialDialog2(context: Context) {
+    val tutorial = AlertDialog.Builder(context)
+    tutorial.apply {
+        setTitle("Set Target Note")
+        setMessage("To start, select a target note for your Drum")
+        setPositiveButton("Next") { _: DialogInterface?, _: Int ->
+            tutorialDialog3(context)
+        }
+    }.create().show()
+}
+
+private fun tutorialDialog3(context: Context) {
+    val tutorial = AlertDialog.Builder(context)
+    tutorial.apply {
+        setTitle("Select Lug")
+        setMessage("Choose a Lug to start tuning with. Place the key in the same position")
+        setPositiveButton("Next") { _: DialogInterface?, _: Int ->
+            tutorialDialog4(context)
+        }
+    }.create().show()
+}
+
+private fun tutorialDialog4(context: Context) {
+    val tutorial = AlertDialog.Builder(context)
+    tutorial.apply {
+        setTitle("Open Mic and Start Playing")
+        setMessage("Turn on the Open Mic switch and start playing. Be sure to mute the other " +
+                "sections of the drum")
+        setPositiveButton("Next") { _: DialogInterface?, _: Int ->
+            tutorialDialog5(context)
+        }
+    }.create().show()
+}
+
+private fun tutorialDialog5(context: Context) {
+    val tutorial = AlertDialog.Builder(context)
+    tutorial.apply {
+        setTitle("Repeat and Follow Pattern")
+        setMessage("Once tuned, select the next lug, " +
+                "place the key in position, and follow the pattern to complete drum tuning!")
+        setPositiveButton("Close Tutorial") { _: DialogInterface?, _: Int ->
+
+        }
+    }.create().show()
+}
 
 class Tuning : AppCompatActivity() {
     private val radius = 250
@@ -142,7 +205,7 @@ class Tuning : AppCompatActivity() {
             startActivity(intent)
             finish() // remove Tuning activity from back stack
         }
-
+        tutorialDialog1(this)
     }
 
     private fun updateBluetoothStatus() {
