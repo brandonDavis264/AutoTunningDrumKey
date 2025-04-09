@@ -26,6 +26,7 @@ class Tuning : AppCompatActivity() {
     private var listeningThread: Thread? = null
     private var isListening = false
     private lateinit var bottomActionBar: TextView
+    private lateinit var targetNote: TextView
     private lateinit var drum: ImageView
     private var targetHit = false
     private var targetFrequency = 0.0f
@@ -66,6 +67,7 @@ class Tuning : AppCompatActivity() {
         supportActionBar?.title = "Tuning"
 
         bottomActionBar = findViewById(R.id.bottomActionBar)
+        targetNote = findViewById(R.id.TargetNote)
 
         // Register BroadcastReceiver for Bluetooth state changes
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
@@ -75,8 +77,7 @@ class Tuning : AppCompatActivity() {
         updateBluetoothStatus()
 
         val noteTuneTo: Spinner = findViewById(R.id.note)
-        val noteTuneOptions = listOf("Select", "B3", "D#4")
-        val targetNote: TextView = findViewById(R.id.TargetNote)
+        val noteTuneOptions = listOf("-", "B3", "D#4")
 
         drum = findViewById(R.id.snare_default)
 
@@ -87,6 +88,7 @@ class Tuning : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedNote = noteTuneOptions[position]
                 targetFrequency = getDrumFrequency(selectedNote)
+                targetNote.text = selectedNote
                 sendCommandToESP(targetFrequency.toString())
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -185,7 +187,7 @@ class Tuning : AppCompatActivity() {
         val maxDiff = 50f
         val diff = kotlin.math.abs(curr - target)
 
-        if (diff <= 10f) {
+        if (diff <= 3.0f) {
             targetHit = true
             switch?.isChecked = false
             Toast.makeText(this, "Target note reached!", Toast.LENGTH_SHORT).show()
@@ -266,12 +268,14 @@ class Tuning : AppCompatActivity() {
             }
         }
         listeningThread?.start()
+        sendCommandToESP("0")
     }
 
     private fun stopListening() {
         isListening = false
         listeningThread?.interrupt()
         listeningThread = null
+        sendCommandToESP("1")
     }
 
     private var pulsingButton: Button? = null // Track currently pulsing button
@@ -380,16 +384,14 @@ class Tuning : AppCompatActivity() {
                                 }
                             }
 
-                            sequenceIndex++ // Move to next button in sequence
+                            sequenceIndex++
 
-                            // Apply pulsing effect to the next button in the sequence
-//                            if (targetHit) {
-//                                highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
-//                            }
                             if (sequenceIndex < expectedSequence!!.size) {
-                                highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
+                                if (targetHit) {
+                                    highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
+                                }
                             } else {
-                                Log.d("DEBUG", "Sequence completed!")
+                                Log.d("DEBUG", "Sequence completed")
                                 expectedSequence = null
                                 sequenceIndex = 0
                             }
