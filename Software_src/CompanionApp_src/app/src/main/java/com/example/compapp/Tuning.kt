@@ -154,8 +154,25 @@ class Tuning : AppCompatActivity() {
                 selectedNote = noteTuneOptions[position]
                 targetFrequency = getDrumFrequency(selectedNote)
                 targetNote.text = selectedNote
+
+                if (switch?.isChecked == true) {
+                    sendCommandToESP(targetFrequency.toString())
+                    Log.d("DEBUG", "Send new frequency after selection: $targetFrequency")
+                }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        switch?.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                //currentNote.text = detectedNote
+                sendCommandToESP(targetFrequency.toString())
+                Log.d("DEBUG", "Send: $targetFrequency")
+            } else {
+                //currentNote.text = "-"
+                sendCommandToESP("0")
+                Log.d("DEBUG", "Send: 0")
+            }
         }
 
         val frameLayout: FrameLayout = findViewById(R.id.frameLayout)
@@ -218,7 +235,7 @@ class Tuning : AppCompatActivity() {
 
     private fun getDrumFrequency(note: String): Float {
         return when (note) {
-            "Select" -> 0.0f
+            "Select" -> -1.0f
             "B3" -> 250.00f
             "D#4" -> 311.13f
             else -> 0.0f
@@ -302,16 +319,7 @@ class Tuning : AppCompatActivity() {
                             currNote = receivedData.toFloat()
                             runOnUiThread {
                                 val formattedFrequency = String.format("%.2f", receivedData.toFloatOrNull() ?: 0f)
-
-                                if (switch?.isChecked == true) {
-                                    currentNote.text = detectedNote
-                                    sendCommandToESP(targetFrequency.toString())
-                                    Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    currentNote.text = "-"
-                                    sendCommandToESP("0")
-                                }
-
+                                Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
                                 selectedButton?.let {
                                     val color = calculateColor(currNote, targetFrequency)
                                     it.backgroundTintList = ColorStateList.valueOf(color)
