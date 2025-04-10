@@ -106,6 +106,17 @@ double recordAndCalculateAverage() {
   int numReadings = 0;
   //Polling Makes The frequncy show up after
   while (millis() - startTime < 1) {
+    //Stops the loop if target freq
+    double tempFreak = targetFreak;
+    if (SerialBT.available()) {
+      String receivedData = SerialBT.readStringUntil('\n');
+      tempFreak = receivedData.toDouble();
+      if(tempFreak != targetFreak){
+        targetFreak = tempFreak;
+        return tempFreak;
+      }
+    }
+
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
 
@@ -197,25 +208,32 @@ void setup() {
 }
 void loop() {
   if (SerialBT.hasClient()) {
-   while((int)targetFreak <= 0){
+    //Debug Mic On and off:
+    if(targetFreak > 0){
+      Serial.println("Mic ON!");
+    }else
+      Serial.println("Mic OFF!");
+
+    // Check for new Bluetooth data
+    if (SerialBT.available()) {
       String receivedData = SerialBT.readStringUntil('\n');
       targetFreak = receivedData.toDouble();
-      Serial.println("Mic Off: " + receivedData);
-      Serial.println("Target Freak: " + (int)targetFreak);
+      Serial.println("Received Target Frequency: " + receivedData);
     }
+
+    // If frequency is 0 or lower, don't run mic or motor logic
+    if (targetFreak <= 0) {
+      digitalWrite(BLUE_LED, LOW);
+      servoFS5.write(90); // Stop motor
+      return;
+    }
+
     digitalWrite(BLUE_LED, HIGH);
-    double freak = recordAndCalculateAverage(); 
-    if(SerialBT.available()){
-      String receivedData = SerialBT.readStringUntil('\n');
-      Serial.println("Mic On: " + receivedData);
-      targetFreak = receivedData.toDouble();
-    }
-    Serial.println("Target Freak: " + (int)targetFreak);
-    
- 
+    double freak = recordAndCalculateAverage();
     turnMotor(freak, targetFreak);
-    delay(200); // Allow servo time to move
-  }else {
+    delay(200);
+  } else {
     digitalWrite(BLUE_LED, LOW);
+    servoFS5.write(90); 
   }
 }
