@@ -94,6 +94,7 @@ class Tuning : AppCompatActivity() {
     private var targetHit = false
     private var targetFrequency = 0.0f
     private var currNote = 0.0f
+    private var selectedNote = ""
     private var selectedButton: Button? = null
     private var switch: SwitchCompat? = null
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
@@ -102,6 +103,7 @@ class Tuning : AppCompatActivity() {
     private val eight_lugs = mutableListOf(67.5f, 112.5f, 157.5f, 202.5f, 247.5f, 292.5f, 337.5f, 382.5f)
     private val ten_lugs = mutableListOf(72.0f, 108.0f, 144.0f, 180.0f, 216.0f, 252.0f, 288.0f, 324.0f, 360.0f, 36.0f)
     private val twelve_lugs = mutableListOf(75.0f, 105.0f, 135.0f, 165.0f, 195.0f, 225.0f, 255.0f, 285.0f, 315.0f, 345.0f, 375.0f, 405.0f)
+    private val noteTuneOptions = listOf("Select", "B3", "D#4")
 
     private val bluetoothStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -131,6 +133,7 @@ class Tuning : AppCompatActivity() {
 
         bottomActionBar = findViewById(R.id.bottomActionBar)
         targetNote = findViewById(R.id.TargetNote)
+        switch = findViewById(R.id.openMic)
 
         // Register BroadcastReceiver for Bluetooth state changes
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
@@ -140,7 +143,6 @@ class Tuning : AppCompatActivity() {
         updateBluetoothStatus()
 
         val noteTuneTo: Spinner = findViewById(R.id.note)
-        val noteTuneOptions = listOf("-", "B3", "D#4")
 
         drum = findViewById(R.id.snare_default)
 
@@ -149,10 +151,9 @@ class Tuning : AppCompatActivity() {
 
         noteTuneTo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedNote = noteTuneOptions[position]
+                selectedNote = noteTuneOptions[position]
                 targetFrequency = getDrumFrequency(selectedNote)
                 targetNote.text = selectedNote
-                sendCommandToESP(targetFrequency.toString())
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
@@ -177,15 +178,7 @@ class Tuning : AppCompatActivity() {
             }
         })
 
-        switch = findViewById(R.id.switch2)
-        switch?.setOnCheckedChangeListener { _, isChecked ->
-            isListening = isChecked
-            if (isChecked) {
-                startListening()
-            } else {
-                stopListening()
-            }
-        }
+        blTransmission()
 
         val backbutton = findViewById<Button>(R.id.back)
         backbutton.setOnClickListener {
@@ -283,7 +276,7 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-    private fun startListening()  {
+    private fun blTransmission()  {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
 
         if (bluetoothSocket == null || !bluetoothSocket.isConnected) {
@@ -309,12 +302,14 @@ class Tuning : AppCompatActivity() {
                             currNote = receivedData.toFloat()
                             runOnUiThread {
                                 val formattedFrequency = String.format("%.2f", receivedData.toFloatOrNull() ?: 0f)
-                                Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
 
                                 if (switch?.isChecked == true) {
                                     currentNote.text = detectedNote
+                                    sendCommandToESP(targetFrequency.toString())
+                                    Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
                                 } else {
                                     currentNote.text = "-"
+                                    sendCommandToESP("0")
                                 }
 
                                 selectedButton?.let {
@@ -331,15 +326,13 @@ class Tuning : AppCompatActivity() {
             }
         }
         listeningThread?.start()
-        sendCommandToESP("0")
     }
 
-    private fun stopListening() {
-        isListening = false
-        listeningThread?.interrupt()
-        listeningThread = null
-        sendCommandToESP("1")
-    }
+//    private fun stopListening() {
+//        isListening = false
+//        listeningThread?.interrupt()
+//        listeningThread = null
+//    }
 
     private var pulsingButton: Button? = null // Track currently pulsing button
 //    private var scalingButton: Button? = null // Track currently scaling button
