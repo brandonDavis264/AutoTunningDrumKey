@@ -197,7 +197,7 @@ void setup() {
 }
 void loop() {
   if (SerialBT.hasClient()) {
-   while((int)targetFreak == 0){
+   while((int)targetFreak <= 0){
       String receivedData = SerialBT.readStringUntil('\n');
       targetFreak = receivedData.toDouble();
       Serial.println("Mic Off: " + receivedData);
