@@ -197,29 +197,23 @@ void setup() {
 }
 void loop() {
   if (SerialBT.hasClient()) {
-   while(enable == 0){
+   while((int)targetFreak == 0){
       String receivedData = SerialBT.readStringUntil('\n');
-      if(receivedData.toInt() == 1 || receivedData.toInt() == 0)
-        enable = (int)receivedData.toDouble();
-      else
-        targetFreak = receivedData.toDouble();
+      targetFreak = receivedData.toDouble();
+      Serial.println("Mic Off: " + receivedData);
+      Serial.println("Target Freak: " + (int)targetFreak);
     }
     digitalWrite(BLUE_LED, HIGH);
-    double freak = recordAndCalculateAverage();
-    //double newTargetFreak = 0; // Declare outside the if block
-
-    if (SerialBT.available()) {
+    double freak = recordAndCalculateAverage(); 
+    if(SerialBT.available()){
       String receivedData = SerialBT.readStringUntil('\n');
-      Serial.println(receivedData);
-      if(receivedData.toInt() == 1 || receivedData.toInt() == 0)
-        enable = (int)receivedData.toDouble();
-      else
-        targetFreak = receivedData.toDouble();
-      Serial.print("Enable:");
-      Serial.println(enable);
-      // Serial.print("New target frequency received: ");
-      // Serial.println(targetFreak);
-    }   
+      Serial.println("Mic On: " + receivedData);
+      targetFreak = receivedData.toDouble();
+    }
+    Serial.println("Target Freak: " + (int)targetFreak);
+    
+ 
+    turnMotor(freak, targetFreak);
     delay(200); // Allow servo time to move
   }else {
     digitalWrite(BLUE_LED, LOW);
