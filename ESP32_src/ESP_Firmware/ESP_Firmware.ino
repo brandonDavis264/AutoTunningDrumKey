@@ -33,6 +33,8 @@ float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
 const float envelopeThreshold = 700.0f;  // Envelope threshold for calculation
 
+int enable = 0;
+
 
 #pragma region i2s Set Up
 void i2s_install() {
@@ -89,8 +91,8 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  Serial.print("Target frequency: ");
-  Serial.println(targetFreak);
+  // Serial.print("Target frequency: ");
+  // Serial.println(targetFreak);
   // Serial.print("Reached Threshold: ");
   // Serial.println(envelopeThreshold: );
   // // Print envelope value for plotting (Serial Plotter compatible)
@@ -104,6 +106,17 @@ double recordAndCalculateAverage() {
   int numReadings = 0;
   //Polling Makes The frequncy show up after
   while (millis() - startTime < 1) {
+    //Stops the loop if target freq
+    double tempFreak = targetFreak;
+    if (SerialBT.available()) {
+      String receivedData = SerialBT.readStringUntil('\n');
+      tempFreak = receivedData.toDouble();
+      if(tempFreak != targetFreak){
+        targetFreak = tempFreak;
+        return tempFreak;
+      }
+    }
+
     size_t bytesIn = 0;
     esp_err_t result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
 
@@ -137,9 +150,9 @@ double recordAndCalculateAverage() {
     double averageFrequency = totalFrequency / numReadings;
     
     // Print average frequency value for plotting (Serial Plotter compatible)
-    // Serial.print("averageFrequency:");
-    // SerialBT.println(averageFrequency);
-    // Serial.println(averageFrequency);
+    Serial.print("averageFrequency:");
+    SerialBT.println(averageFrequency);
+    Serial.println(averageFrequency);
   
 
     return averageFrequency;
@@ -174,8 +187,8 @@ void turnMotor(float freak, float targetFreak){
   if (abs(angle) > 3) {
       rotate(constrain);
       
-      // Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
-      //  + targetFreak + " | Error: " + error + " | Angle: " + constrain);
+      Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
+       + targetFreak + " | Error: " + error + " | Angle: " + constrain);
   } else{
       // Serial.println("Adjustment too small - holding position");
       servoFS5.write(90);
@@ -195,20 +208,34 @@ void setup() {
 }
 void loop() {
   if (SerialBT.hasClient()) {
-    digitalWrite(BLUE_LED, HIGH);
-    double freak = recordAndCalculateAverage();
-    //double newTargetFreak = 0; // Declare outside the if block
+    //Debug Mic On and off:
+    if(targetFreak > 0){
+      Serial.println("Mic ON!");
+    }else
+      Serial.println("Mic OFF!");
 
+    // Check for new Bluetooth data
     if (SerialBT.available()) {
       String receivedData = SerialBT.readStringUntil('\n');
       targetFreak = receivedData.toDouble();
-      Serial.print("New target frequency received: ");
-      Serial.println(targetFreak);
+
+      Serial.println("Received Target Frequency: " + receivedData);
     }
 
+    // If frequency is 0 or lower, don't run mic or motor logic
+    if (targetFreak <= 0) {
+      digitalWrite(BLUE_LED, LOW);
+      servoFS5.write(90); // Stop motor
+      return;
+    }
+
+    // Run Mic and Motor Logic
+    digitalWrite(BLUE_LED, HIGH);
+    double freak = recordAndCalculateAverage();
     turnMotor(freak, targetFreak);
-    delay(200); // Allow servo time to move
-  }else {
+    delay(200);
+  } else {
     digitalWrite(BLUE_LED, LOW);
+    servoFS5.write(90); 
   }
 }
