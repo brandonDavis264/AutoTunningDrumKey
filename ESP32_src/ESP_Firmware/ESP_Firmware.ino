@@ -33,6 +33,8 @@ float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
 const float envelopeThreshold = 700.0f;  // Envelope threshold for calculation
 
+int enable = 0;
+
 
 #pragma region i2s Set Up
 void i2s_install() {
@@ -89,8 +91,8 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  Serial.print("Target frequency: ");
-  Serial.println(targetFreak);
+  // Serial.print("Target frequency: ");
+  // Serial.println(targetFreak);
   // Serial.print("Reached Threshold: ");
   // Serial.println(envelopeThreshold: );
   // // Print envelope value for plotting (Serial Plotter compatible)
@@ -137,9 +139,9 @@ double recordAndCalculateAverage() {
     double averageFrequency = totalFrequency / numReadings;
     
     // Print average frequency value for plotting (Serial Plotter compatible)
-    // Serial.print("averageFrequency:");
-    // SerialBT.println(averageFrequency);
-    // Serial.println(averageFrequency);
+    Serial.print("averageFrequency:");
+    SerialBT.println(averageFrequency);
+    Serial.println(averageFrequency);
   
 
     return averageFrequency;
@@ -174,8 +176,8 @@ void turnMotor(float freak, float targetFreak){
   if (abs(angle) > 3) {
       rotate(constrain);
       
-      // Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
-      //  + targetFreak + " | Error: " + error + " | Angle: " + constrain);
+      Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
+       + targetFreak + " | Error: " + error + " | Angle: " + constrain);
   } else{
       // Serial.println("Adjustment too small - holding position");
       servoFS5.write(90);
@@ -195,16 +197,29 @@ void setup() {
 }
 void loop() {
   if (SerialBT.hasClient()) {
+   while(enable == 0){
+      String receivedData = SerialBT.readStringUntil('\n');
+      if(receivedData.toInt() == 1 || receivedData.toInt() == 0)
+        enable = (int)receivedData.toDouble();
+      else
+        targetFreak = receivedData.toDouble();
+    }
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
     //double newTargetFreak = 0; // Declare outside the if block
 
     if (SerialBT.available()) {
-      String receivedData = SerialBT.readStringUntil('\n'); // Read data until newline
-      //newTargetFreak = receivedData.toDouble(); // Assign new value
-      //targetFreak = newTargetFreak; // Update targetFreak
-    }
-    turnMotor(freak, targetFreak);
+      String receivedData = SerialBT.readStringUntil('\n');
+      Serial.println(receivedData);
+      if(receivedData.toInt() == 1 || receivedData.toInt() == 0)
+        enable = (int)receivedData.toDouble();
+      else
+        targetFreak = receivedData.toDouble();
+      Serial.print("Enable:");
+      Serial.println(enable);
+      // Serial.print("New target frequency received: ");
+      // Serial.println(targetFreak);
+    }   
     delay(200); // Allow servo time to move
   }else {
     digitalWrite(BLUE_LED, LOW);
