@@ -221,6 +221,7 @@ void loop() {
     if (SerialBT.available()) {
       String receivedData = SerialBT.readStringUntil('\n');
       targetFreak = receivedData.toDouble();
+
       Serial.println("Received Target Frequency: " + receivedData);
     }
 
@@ -231,6 +232,7 @@ void loop() {
       return;
     }
 
+    // Run Mic and Motor Logic
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
     if(freak > 0)
