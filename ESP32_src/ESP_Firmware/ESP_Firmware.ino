@@ -31,7 +31,7 @@ int maxTurnAngle = 90; // limit on how much we can turn the motor at a time
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
-const float envelopeThreshold = 700.0f;  // Envelope threshold for calculation
+const float envelopeThreshold = 3000.0f;  // Envelope threshold for calculation
 
 int enable = 0;
 
@@ -91,13 +91,13 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  // Serial.print("Target frequency: ");
-  // Serial.println(targetFreak);
-  // Serial.print("Reached Threshold: ");
-  // Serial.println(envelopeThreshold: );
-  // // Print envelope value for plotting (Serial Plotter compatible)
-  // Serial.print("envelope:");
-  // Serial.println(envelope);
+  Serial.print("Target frequency:");
+  Serial.println(targetFreak);
+  Serial.print("Reached Threshold:");
+  Serial.println(envelopeThreshold);
+  // Print envelope value for plotting (Serial Plotter compatible)
+  Serial.print("envelope:");
+  Serial.println(envelope);
 }
 
 double recordAndCalculateAverage() {
@@ -129,6 +129,8 @@ double recordAndCalculateAverage() {
       // Only proceed with FFT and frequency calculation if envelope exceeds threshold
       if (envelope > envelopeThreshold) {
         // FFT computation
+        // result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
+        // samples_read = bytesIn / sizeof(int16_t);
         for (int i = 0; i < samples_read; i++) {
           vReal[i] = sBuffer[i];
           vImag[i] = 0;
@@ -148,12 +150,13 @@ double recordAndCalculateAverage() {
   // Calculate and display the average frequency if envelope was above threshold
   if (numReadings > 0) {
     double averageFrequency = totalFrequency / numReadings;
-    
-    // Print average frequency value for plotting (Serial Plotter compatible)
-    Serial.print("averageFrequency:");
-    SerialBT.println(averageFrequency);
-    Serial.println(averageFrequency);
-  
+    if((averageFrequency < 445 && averageFrequency > 90)){
+      // Print average frequency value for plotting (Serial Plotter compatible)
+      Serial.print("averageFrequency:");
+      SerialBT.println((int)averageFrequency);
+      Serial.println(averageFrequency);
+    }else
+      averageFrequency = 0;
 
     return averageFrequency;
   }
@@ -179,10 +182,10 @@ void rotate(int angle) {
 
 void turnMotor(float freak, float targetFreak){
   int error = targetFreak - freak;
-  int scale = 1;
+  int scale = 5;
   
   int angle = scale * error;
-  int constrain = constrain(angle, -90, 90);
+  int constrain = constrain(angle, -180, 180);
   
   if (abs(angle) > 3) {
       rotate(constrain);
@@ -230,8 +233,11 @@ void loop() {
 
     digitalWrite(BLUE_LED, HIGH);
     double freak = recordAndCalculateAverage();
-    turnMotor(freak, targetFreak);
-    delay(200);
+    if(freak > 0)
+      turnMotor(freak, targetFreak);
+
+    delay(1000);
+
   } else {
     digitalWrite(BLUE_LED, LOW);
     servoFS5.write(90); 
