@@ -91,19 +91,20 @@ class Tuning : AppCompatActivity() {
     private lateinit var bottomActionBar: TextView
     private lateinit var targetNote: TextView
     private lateinit var drum: ImageView
-    private var targetHit = false
     private var targetFrequency = 0.0f
     private var currNote = 0.0f
     private var selectedNote = ""
     private var selectedButton: Button? = null
     private var switch: SwitchCompat? = null
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+    private val lockedButtons = mutableSetOf<Button>()
     private val four_lugs = mutableListOf(45.0f, 135.0f, 225.0f, 315.0f)
     private val six_lugs = mutableListOf(60.0f, 120.0f, 180.0f, 240.0f, 300.0f, 360.0f)
     private val eight_lugs = mutableListOf(67.5f, 112.5f, 157.5f, 202.5f, 247.5f, 292.5f, 337.5f, 382.5f)
     private val ten_lugs = mutableListOf(72.0f, 108.0f, 144.0f, 180.0f, 216.0f, 252.0f, 288.0f, 324.0f, 360.0f, 36.0f)
     private val twelve_lugs = mutableListOf(75.0f, 105.0f, 135.0f, 165.0f, 195.0f, 225.0f, 255.0f, 285.0f, 315.0f, 345.0f, 375.0f, 405.0f)
-    private val noteTuneOptions = listOf("Select", "B3", "D#4")
+    private val noteTuneOptions = listOf("Select", "G2", "G#2", "A2", "A#2", "B2", "C3", "C#3", "D3", "D#3", "E3", "F3", "F#3", "G3", "G#3", "A3", "A#3", "B3",
+                                        "C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4")
 
     private val bluetoothStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -236,8 +237,33 @@ class Tuning : AppCompatActivity() {
     private fun getDrumFrequency(note: String): Float {
         return when (note) {
             "Select" -> -1.0f
-            "B3" -> 250.00f
+            "G2" -> 98.00f
+            "G#2" -> 103.83f
+            "A2" -> 110.00f
+            "A#2" -> 116.54f
+            "B2" -> 123.47f
+            "C3" -> 130.81f
+            "C#3" -> 138.59f
+            "D3" -> 146.83f
+            "D#3" -> 155.56f
+            "E3" -> 164.81f
+            "F3" -> 174.61f
+            "F#3" -> 185.00f
+            "G3" -> 196.00f
+            "G#3" -> 207.65f
+            "A3" -> 220.00f
+            "A#3" -> 233.08f
+            "B3" -> 246.94f
+            "C4" -> 261.63f
+            "C#4" -> 277.18f
+            "D4" -> 293.66f
             "D#4" -> 311.13f
+            "E4" -> 329.63f
+            "F4" -> 349.23f
+            "F#4" -> 369.99f
+            "G4" -> 392.00f
+            "G#4" -> 415.30f
+            "A4" -> 440.00f
             else -> 0.0f
         }
     }
@@ -245,12 +271,12 @@ class Tuning : AppCompatActivity() {
     private fun freqToNote(note: Float): String {
         val noteMap = mapOf(
             "G2" to 98.00f, "G#2" to 103.83f, "A2" to 110.00f, "A#2" to 116.54f,
-            "B2" to 123.47f, "C3" to 130.81f, "C#3" to 138.59f, "E3" to 164.81f,
-            "F3" to 174.61f, "F#3" to 185.00f, "G3" to 196.00f, "G#3" to 207.65f,
-            "A3" to 220.00f, "A#3" to 233.08f, "B3" to 246.94f, "C4" to 261.63f,
-            "C#4" to 277.18f, "D4" to 293.66f, "D#4" to 311.13f, "E4" to 329.63f,
-            "F4" to 349.23f, "F#4" to 369.99f, "G4" to 392.00f, "G#4" to 415.30f,
-            "A4" to 440.00f
+            "B2" to 123.47f, "C3" to 130.81f, "C#3" to 138.59f,  "D3" to 146.83f,
+            "D#3" to 155.56f, "E3" to 164.81f, "F3" to 174.61f, "F#3" to 185.00f,
+            "G3" to 196.00f, "G#3" to 207.65f, "A3" to 220.00f, "A#3" to 233.08f,
+            "B3" to 246.94f, "C4" to 261.63f, "C#4" to 277.18f, "D4" to 293.66f,
+            "D#4" to 311.13f, "E4" to 329.63f, "F4" to 349.23f, "F#4" to 369.99f,
+            "G4" to 392.00f, "G#4" to 415.30f, "A4" to 440.00f
         )
 
         return noteMap.minByOrNull { (_, frequency) -> kotlin.math.abs(frequency - note) }?.key ?: "N/A"
@@ -261,14 +287,12 @@ class Tuning : AppCompatActivity() {
         val diff = kotlin.math.abs(curr - target)
 
         if (diff <= 3.0f) {
-            targetHit = true
             switch?.isChecked = false
             Toast.makeText(this, "Target note reached!", Toast.LENGTH_SHORT).show()
             return Color.rgb(0, 180, 0)
         } else {
             val fraction = (diff - 10f) / (maxDiff - 10f)
                 .coerceIn(0f, 1f) // clamp between 0 and 1
-
             val red = 255
             val green = (255 * fraction).toInt()
 
@@ -314,16 +338,30 @@ class Tuning : AppCompatActivity() {
                         val receivedData = String(buffer, 0, bytesRead).trim()
                         val frequency = receivedData.toFloatOrNull() ?: 0f
 
-                        if (frequency > 97.99) {
+                        if (frequency >  0) {
                             val detectedNote = freqToNote(receivedData.toFloat())
+                            Log.d("DEBUG", "Detected Note: $detectedNote" )
+                            currentNote.text = detectedNote
                             currNote = receivedData.toFloat()
                             runOnUiThread {
                                 val formattedFrequency = String.format("%.2f", receivedData.toFloatOrNull() ?: 0f)
                                 Toast.makeText(this, "Received: $formattedFrequency Hz", Toast.LENGTH_SHORT).show()
-                                selectedButton?.let {
-                                    val color = calculateColor(currNote, targetFrequency)
-                                    it.backgroundTintList = ColorStateList.valueOf(color)
+//                                selectedButton?.let {
+//                                    val color = calculateColor(currNote, targetFrequency)
+//                                    it.backgroundTintList = ColorStateList.valueOf(color)
+//                                }
+                                selectedButton?.let { button ->
+                                    if (!lockedButtons.contains(button)) {
+                                        val color = calculateColor(currNote, targetFrequency)
+
+                                        if (color == Color.rgb(0, 180, 0)) {
+                                            lockedButtons.add(button)
+                                        }
+
+                                        button.backgroundTintList = ColorStateList.valueOf(color)
+                                    }
                                 }
+
                             }
                         }
                     }
@@ -336,11 +374,6 @@ class Tuning : AppCompatActivity() {
         listeningThread?.start()
     }
 
-//    private fun stopListening() {
-//        isListening = false
-//        listeningThread?.interrupt()
-//        listeningThread = null
-//    }
 
     private var pulsingButton: Button? = null // Track currently pulsing button
 //    private var scalingButton: Button? = null // Track currently scaling button
@@ -451,9 +484,7 @@ class Tuning : AppCompatActivity() {
                             sequenceIndex++
 
                             if (sequenceIndex < expectedSequence!!.size) {
-                                if (targetHit) {
                                     highlightNextButton(buttonMap, expectedSequence, sequenceIndex)
-                                }
                             } else {
                                 Log.d("DEBUG", "Sequence completed")
                                 expectedSequence = null
@@ -536,13 +567,6 @@ class Tuning : AppCompatActivity() {
 
         button.tag = animatorSet // Store animation reference in the button
         pulsingButton = button
-    }
-
-    private fun stopScalingEffect(button: Button) {
-        (button.tag as? AnimatorSet)?.cancel()
-        button.tag = null
-        button.scaleX = 1f // Reset size
-        button.scaleY = 1f
     }
 
     private fun stopPulsingGlowEffect() {
