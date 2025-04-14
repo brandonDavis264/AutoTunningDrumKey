@@ -75,6 +75,17 @@ private fun tutorialDialog4(context: Context) {
 private fun tutorialDialog5(context: Context) {
     val tutorial = AlertDialog.Builder(context)
     tutorial.apply {
+        setTitle("Opposing Lugs")
+        setMessage("Ideally, the target frequencies of lugs opposing each other (i.e. L2 and L4 on a 4 lug drum) should have the same target frequency")
+        setPositiveButton("Next") { _: DialogInterface?, _: Int ->
+            tutorialDialog6(context)
+        }
+    }.create().show()
+}
+
+private fun tutorialDialog6(context: Context) {
+    val tutorial = AlertDialog.Builder(context)
+    tutorial.apply {
         setTitle("Repeat and Follow Pattern")
         setMessage("Once tuned, select the next lug, " +
                 "place the key in position, and follow the pattern to complete drum tuning!")
@@ -300,6 +311,23 @@ class Tuning : AppCompatActivity() {
         }
     }
 
+    private fun calculateTextViewColor(curr: Float, target: Float): Int {
+        val diff = kotlin.math.abs(curr - target)
+
+        return when {
+            diff <= 3.0f -> Color.rgb(0, 180, 0)
+            diff <= 22.0f -> Color.rgb(102, 204, 102)
+            else -> {
+                val maxDiff = 50f
+                val fraction = ((diff - 22f) / (maxDiff - 22f)).coerceIn(0f, 1f)
+                val red = 255
+                val green = (255 * (1 - fraction)).toInt()
+                Color.rgb(red, green, 0)
+            }
+        }
+    }
+
+
     private fun sendCommandToESP(command: String) {
         val bluetoothSocket = AppBluetoothManager.bluetoothSocket
 
@@ -350,6 +378,11 @@ class Tuning : AppCompatActivity() {
 //                                    val color = calculateColor(currNote, targetFrequency)
 //                                    it.backgroundTintList = ColorStateList.valueOf(color)
 //                                }
+                                val tvColor = calculateTextViewColor(currNote, targetFrequency)
+                                val drawable = currentNote.background.mutate()
+                                drawable.setTint(tvColor)
+
+
                                 selectedButton?.let { button ->
                                     if (!lockedButtons.contains(button)) {
                                         val color = calculateColor(currNote, targetFrequency)
@@ -441,14 +474,8 @@ class Tuning : AppCompatActivity() {
                             // Reset the previous button
                             selectedButton?.let {
                                 stopPulsingGlowEffect()
-//                                stopScalingEffect(it)
-//                                it.setBackgroundResource(R.drawable.diamond)
                             }
 
-                            // Apply "diamond_p" background and scaling to the **current** button
-//                            button.setTextColor(Color.BLACK)
-//                            button.setBackgroundResource(R.drawable.diamond_p)
-//                            applyScalingEffect(button)
 
                             // Update the selected button reference
                             selectedButton = button
@@ -509,30 +536,6 @@ class Tuning : AppCompatActivity() {
         }
     }
 
-
-//    private fun applyScalingEffect(button: Button) {
-//        stopScalingEffect(button) // Stop previous effect before applying new one
-//
-//        val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.2f, 1f).apply {
-//            duration = 1600
-//            repeatMode = ObjectAnimator.REVERSE
-//            repeatCount = ObjectAnimator.INFINITE
-//        }
-//
-//        val scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.2f, 1f).apply {
-//            duration = 1600
-//            repeatMode = ObjectAnimator.REVERSE
-//            repeatCount = ObjectAnimator.INFINITE
-//        }
-//
-//        val animatorSet = AnimatorSet()
-//        animatorSet.playTogether(scaleX, scaleY)
-//        animatorSet.start()
-//
-//        button.tag = animatorSet // Store animation reference in the button
-//        scalingButton = button
-//    }
-
     private fun highlightNextButton(buttonMap: Map<String, Button>, sequence: List<String>?, index: Int) {
         if (sequence != null && index < sequence.size) {
             val nextButtonText = sequence[index]
@@ -574,12 +577,6 @@ class Tuning : AppCompatActivity() {
             (button.tag as? AnimatorSet)?.cancel() // Stop animation
             button.tag = null
             button.alpha = 1f // Reset transparency
-
-            // Ensure we only reset the previous pulsing button, NOT the next button!
-//            if (button != scalingButton) {
-//                button.setTextColor(Color.LTGRAY)
-//                button.setBackgroundResource(R.drawable.diamond) // Reset only if it's not the active one
-//            }
         }
     }
 
