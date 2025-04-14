@@ -11,7 +11,7 @@ This milestone represents a build with all features complete, with minor bugs. I
       - Peripherals 
           - Microphone I2S Communication
           - Classic Bluetooth Communication
-          - Servo Moror Pulse With Modulation
+          - Servo Motor Pulse Width Modulation
       - Algorithms
           - Fast Fourier Transform (FFT)
   - ESP32 Project Firmware
