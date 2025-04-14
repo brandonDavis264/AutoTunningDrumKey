@@ -16,11 +16,11 @@ int BLUE_LED = 2;
 int16_t* sBuffer; // Dynamic Buffers
 double* vReal;
 double* vImag;
-int bufferLen = 4096; //Sample Size
+int bufferLen = 1024; // will record for 23.22ms     1024/44100 = 0.023219
 //Desired frequency
 double targetFreak = 0;
 // FFT Object
-ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100);
+ArduinoFFT<double> FFT = ArduinoFFT<double>(NULL, NULL, bufferLen, 44100); // 44100 is the sampling rate used for fft
 
 // Servo Proccessing Variables 
 Servo servoFS5;
@@ -34,7 +34,6 @@ const float alpha = 0.05f;  // Low-pass filter smoothing factor
 const float envelopeThreshold = 3000.0f;  // Envelope threshold for calculation
 
 int enable = 0;
-
 
 #pragma region i2s Set Up
 void i2s_install() {
@@ -100,6 +99,48 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
   Serial.println(envelope);
 }
 
+// moving average logic used to smooth out the samples obtained from the mic
+#define AVG_COUNT 5
+double freqBuffer[AVG_COUNT] = {0};
+int bufferIndex = 0;
+
+double rollingAverage(double newFreq) {
+  freqBuffer[bufferIndex++] = newFreq;
+  if (bufferIndex >= AVG_COUNT) bufferIndex = 0;
+
+  double sum = 0;
+  for (int i = 0; i < AVG_COUNT; i++) {
+    sum += freqBuffer[i];
+  }
+  return sum / AVG_COUNT;
+}
+
+
+// The Harmonic Product Spectrum (HPS) is a signal processing technique used to estimate the 
+// fundamental frequency (pitch) of a signal, especially those with harmonic content like musical instruments
+double findHPS(double* spectrum, int len, int sampleRate, int fftSize) {
+  int hpsLen = len / 3;
+  double* hps = (double*)malloc(hpsLen * sizeof(double));
+  if (!hps) return 0;
+
+  for (int i = 0; i < hpsLen; i++) {
+    hps[i] = spectrum[i] * spectrum[2 * i] * spectrum[3 * i];
+  }
+
+  double maxVal = 0;
+  int maxIndex = 0;
+  for (int i = 2; i < hpsLen; i++) {
+    if (hps[i] > maxVal) {
+      maxVal = hps[i];
+      maxIndex = i;
+    }
+  }
+
+  free(hps);
+  return (maxIndex * (double)sampleRate) / fftSize;
+}
+
+
 double recordAndCalculateAverage() {
   unsigned long startTime = millis();
   double totalFrequency = 0;
@@ -139,9 +180,22 @@ double recordAndCalculateAverage() {
         FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
         FFT.compute(FFT_FORWARD);
         FFT.complexToMagnitude();
-        totalFrequency += FFT.majorPeak();
 
-        numReadings++;
+        // Use HPS instead of just FFT.majorPeak();
+        double hpsFreq = findHPS(vReal, bufferLen / 2, 44100, bufferLen);
+
+        // Filter out of range values or outliers
+        if (hpsFreq > 90 && hpsFreq < 500) {
+          double smoothedFreq = rollingAverage(hpsFreq);
+          totalFrequency += smoothedFreq;
+          numReadings++;
+
+          Serial.print("HPS Frequency (raw): ");
+          Serial.println(hpsFreq);
+          Serial.print("Smoothed Frequency: ");
+          Serial.println(smoothedFreq);
+        }
+
         break;
       }
     }
