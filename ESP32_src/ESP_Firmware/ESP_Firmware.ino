@@ -90,13 +90,13 @@ void processEnvelope(int16_t* sBuffer, size_t data_size) {
     envelope = alpha * rectified + (1 - alpha) * envelope;
   }
 
-  Serial.print("Target frequency:");
-  Serial.println(targetFreak);
-  Serial.print("Reached Threshold:");
-  Serial.println(envelopeThreshold);
-  // Print envelope value for plotting (Serial Plotter compatible)
-  Serial.print("envelope:");
-  Serial.println(envelope);
+  // Serial.print("Target frequency:");
+  // Serial.println(targetFreak);
+  // Serial.print("Reached Threshold:");
+  // Serial.println(envelopeThreshold);
+  // // Print envelope value for plotting (Serial Plotter compatible)
+  // Serial.print("envelope:");
+  // Serial.println(envelope);
 }
 
 // moving average logic used to smooth out the samples obtained from the mic
@@ -170,8 +170,9 @@ double recordAndCalculateAverage() {
       // Only proceed with FFT and frequency calculation if envelope exceeds threshold
       if (envelope > envelopeThreshold) {
         // FFT computation
-        // result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
-        // samples_read = bytesIn / sizeof(int16_t);
+        delay(20);
+        result = i2s_read(I2S_PORT, sBuffer, bufferLen * sizeof(int16_t), &bytesIn, portMAX_DELAY);
+        samples_read = bytesIn / sizeof(int16_t);
         for (int i = 0; i < samples_read; i++) {
           vReal[i] = sBuffer[i];
           vImag[i] = 0;
@@ -204,7 +205,7 @@ double recordAndCalculateAverage() {
   // Calculate and display the average frequency if envelope was above threshold
   if (numReadings > 0) {
     double averageFrequency = totalFrequency / numReadings;
-    if((averageFrequency < 445 && averageFrequency > 90)){
+    if((averageFrequency < 500 && averageFrequency > 90)){
       // Print average frequency value for plotting (Serial Plotter compatible)
       Serial.print("averageFrequency:");
       SerialBT.println((int)averageFrequency);
@@ -241,7 +242,7 @@ void turnMotor(float freak, float targetFreak){
   int angle = scale * error;
   int constrain = constrain(angle, -180, 180);
   
-  if (abs(angle) > 3) {
+  if (abs(angle) > 5) {
       rotate(constrain);
       
       Serial.println(String("Current Freq: ") + freak + " | Target Freq: "
