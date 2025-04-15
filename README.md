@@ -1,11 +1,12 @@
 # AutoTunningDrum
-Milestone Overview - Release candidate
+Milestone Overview - Production release
 
 SEE "Design.pdf" FOR INTERNAL, EXTERNAL, AND PERSISTENT STATE DESIGNS
 
-This milestone represents a build with all features complete, with minor bugs. It shows an almost finilized, working product.
+This milestone represents a build with all features complete, with no bugs. It shows a finilized, working product.
 
 # Project Work Space:
+- 3D_Files
 - ESP32_Src:
   - Test Files:
       - Peripherals 
@@ -24,12 +25,14 @@ This milestone represents a build with all features complete, with minor bugs. I
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Hardware Development:
-  - Linear Controller loop
+  - Linear Controller loop (PID - Proportional-Integral-Derivative)
   - Mic proper functioning
   - Soldering of all parts into one
-  - Peak detection
-  - Encasing
+  - Peak detection (Envelope follower)
+  - Encasing (3D printed encasing)
   - Drill bit to connect to the lug and be able to twist it.
+  - Moving average filter used to smooth out the samples obtained from the mic.
+  - Harmonic Product Spectrum (HPS) is a signal processing technique used to estimate the fundamental frequency (pitch), especially those with harmonic content like musical instruments, helpful in our case sice drums have a lot of overtones.
 
 # Android Application Development:
   - Button gradients for note accuracy from red to green.
@@ -37,7 +40,7 @@ This milestone represents a build with all features complete, with minor bugs. I
   - Spinner drum image for user UX/UI with a slice highlighted.
   - Current note box showing detected note.
   - Variable lug count.
-  - Drop down menu that selects target note. (only for the beta build version and production release)
+  - Drop down menu that selects target note.
   - Open mic button - Turns on the mic -.
   - Frequency shows on the bottom of the screen.
   
@@ -45,12 +48,10 @@ This milestone represents a build with all features complete, with minor bugs. I
 # Known Bugs and Issues
 
 Hardware Bugs:
-  - Actual tuning of the drum faces issues with overtones and natural errors when struck at different pressures.
 
 Software Bugs:
-  - This build for the app does not have the ability to send data to the ESP; however, the code for it is in the Beta build and can easily be ported over for Production release
+  
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
 # Future Plans
-  - Finilize encasing for the hardware to better fit the device and avoid the motor from slipping. Mic, power switch, charge port holes positioning.
-  - Include tutorial/walkthrough on welcome page.
-  - Testing of the device and app with the drum.
+  - Cater to other drums with different tuning ranges.
+  - Refining of the App and Firmware.
