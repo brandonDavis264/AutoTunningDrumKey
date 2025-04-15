@@ -31,7 +31,7 @@ int maxTurnAngle = 90; // limit on how much we can turn the motor at a time
 // Envelope Follower variables
 float envelope = 0.0f;
 const float alpha = 0.05f;  // Low-pass filter smoothing factor
-const float envelopeThreshold = 1500.0f;  // Envelope threshold for calculation
+const float envelopeThreshold = 3000.0f;  // Envelope threshold for calculation
 
 int enable = 0;
 
